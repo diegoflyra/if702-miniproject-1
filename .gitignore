@@ -7,3 +7,6 @@ checkpoints/
 .ipynb_checkpoints/
 .env
 outputs_smoke_test/
+outputs_mlp/
+outputs_cnn/
+resultados_kaggle/

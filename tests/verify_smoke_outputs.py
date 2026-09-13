@@ -204,6 +204,6 @@ assert report["test/accuracy"].notna().all() and (report["folds"] == 3).all()
 per_class = rep.plot_per_class([b1["exp_name"], b3["exp_name"]], metric="recall")
 assert list(per_class.index) == list(CIFAR10_CLASSES)
 figs = os.listdir(os.path.join(OUT, "_relatorio"))
-for expected in ("heatmap_smoke_mlp_b1_mlp_layers_x_mlp_neurons.png", "barras_triagem_smoke_mlp_b2.png"):
+for expected in ("heatmap_smoke_mlp_b1_mlp_layers_x_mlp_neurons__val-accuracy_mean.png", "barras_triagem_smoke_mlp_b2.png"):
     assert expected in figs, f"figura ausente: {expected}"
 print("  OK report_utils: rankings sem teste, heatmaps, barras, curvas das finalistas e relatório final com teste só dos campeões")

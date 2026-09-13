@@ -231,7 +231,7 @@ def validate(config, max_parameters=None):
     try:
         n_params = count_parameters(build_model(args))
     except ValueError as exc:
-        return False, str(exc).split(" (")[0], None
+        return False, str(exc), None
     if max_parameters and n_params > max_parameters:
         return False, f"{n_params:,} parâmetros excede max_parameters={max_parameters:,}", n_params
     return True, "", n_params

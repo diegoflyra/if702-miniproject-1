@@ -283,14 +283,17 @@ def heatmap(block, row, col, value="val/accuracy_mean", facet=None, stage="triag
     if df.empty:
         return None
     cols = [col] if isinstance(col, str) else list(col)
-    df = df.copy()
+    # Ordena pelos valores originais (numéricos quando possível), não pelo texto: 128, 256, ..., 2048.
+    df = df.sort_values(cols + [row], kind="stable").copy()
     df["_col"] = df[cols].astype(str).agg(" | ".join, axis=1)
+    col_order = list(dict.fromkeys(df["_col"]))
     facets = [None] if facet is None else sorted(df[facet].astype(str).unique())
     fig, axes = plt.subplots(1, len(facets), figsize=(max(5, 1.3 * df["_col"].nunique()) * len(facets), 4.2),
                              squeeze=False)
     for ax, fval in zip(axes[0], facets):
         sub = df if fval is None else df[df[facet].astype(str) == fval]
         pivot = sub.pivot_table(index=row, columns="_col", values=value, aggfunc="first")
+        pivot = pivot.reindex(columns=[c for c in col_order if c in pivot.columns]).sort_index()
         im = ax.imshow(pivot.values, cmap="viridis", aspect="auto")
         ax.set_xticks(range(len(pivot.columns)), pivot.columns, rotation=35, ha="right", fontsize=8)
         ax.set_yticks(range(len(pivot.index)), pivot.index)
@@ -308,7 +311,8 @@ def heatmap(block, row, col, value="val/accuracy_mean", facet=None, stage="triag
         fig.colorbar(im, ax=ax, fraction=0.046)
     fig.tight_layout()
     if save:
-        path = os.path.join(report_dir(), f"heatmap_{block}_{row}_x_{'-'.join(cols)}.png")
+        metric = value.replace("/", "-")
+        path = os.path.join(report_dir(), f"heatmap_{block}_{row}_x_{'-'.join(cols)}__{metric}.png")
         fig.savefig(path, dpi=150)
         print(f"Figura salva em {path}")
     plt.show()
