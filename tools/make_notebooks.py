@@ -169,24 +169,60 @@ WORKERS_PER_GPU = {workers}  # experimentos simultâneos por GPU
 RESUME_FROM = ""  # ex.: "/kaggle/input/<output-da-versao-anterior>/outputs" para retomar
 
 # CIFAR-10: usa a cópia anexada como Input do Kaggle (segundos), em vez do servidor original (lento).
-# Procura "cifar-10-batches-py" ou "cifar-10-python.tar.gz" em qualquer Input anexado.
+# A cópia só é aceita se TODOS os arquivos tiverem o MD5 oficial (os mesmos hashes que o torchvision
+# usa para validar o download de https://www.cs.toronto.edu/~kriz/cifar.html). Se algo divergir,
+# a cópia é descartada e o dataset é baixado do servidor original.
 import glob
+import hashlib
 import tarfile
 
+from torchvision.datasets import CIFAR10
+
 DATA_DIR = os.path.join(REPO_DIR, "data")
+CIFAR_DIR = os.path.join(DATA_DIR, "cifar-10-batches-py")
+OFFICIAL_MD5 = dict(CIFAR10.train_list + CIFAR10.test_list + [[CIFAR10.meta["filename"], CIFAR10.meta["md5"]]])
 os.makedirs(DATA_DIR, exist_ok=True)
-if not os.path.isdir(os.path.join(DATA_DIR, "cifar-10-batches-py")):
+
+
+def md5(path):
+    digest = hashlib.md5()
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def cifar_is_official(folder):
+    rows, ok = [], True
+    for name, expected in OFFICIAL_MD5.items():
+        path = os.path.join(folder, name)
+        actual = md5(path) if os.path.isfile(path) else "arquivo ausente"
+        ok &= actual == expected
+        rows.append({{"arquivo": name, "md5 oficial": expected, "md5 da cópia": actual,
+                     "status": "OK" if actual == expected else "DIFERENTE"}})
+    display(pd.DataFrame(rows))
+    return ok
+
+
+if not os.path.isdir(CIFAR_DIR):
     folders = glob.glob("/kaggle/input/**/cifar-10-batches-py", recursive=True)
     archives = glob.glob("/kaggle/input/**/cifar-10-python.tar.gz", recursive=True)
     if folders:
-        shutil.copytree(folders[0], os.path.join(DATA_DIR, "cifar-10-batches-py"))
-        print(f"CIFAR-10 copiado de {{folders[0]}}")
+        print(f"Cópia encontrada: {{folders[0]}}")
+        shutil.copytree(folders[0], CIFAR_DIR)
     elif archives:
+        print(f"Arquivo encontrado: {{archives[0]}} | md5 {{md5(archives[0])}} (oficial: {{CIFAR10.tgz_md5}})")
         with tarfile.open(archives[0]) as tar:
             tar.extractall(DATA_DIR)
-        print(f"CIFAR-10 extraído de {{archives[0]}}")
     else:
         print("AVISO: CIFAR-10 não encontrado nos Inputs; será baixado do servidor original (pode levar muitos minutos).")
+
+if os.path.isdir(CIFAR_DIR):
+    if cifar_is_official(CIFAR_DIR):
+        print("CIFAR-10 verificado: todos os arquivos são idênticos aos oficiais.")
+    else:
+        shutil.rmtree(CIFAR_DIR)
+        print("CÓPIA REJEITADA: arquivos diferentes dos oficiais. O dataset será baixado do servidor original.")
 
 # Onde os resultados são gravados (lido por run_experiment.py, grid_search.py e report_utils.py)
 os.environ["EXP_OUTPUT_DIR"] = "/kaggle/working/outputs"
