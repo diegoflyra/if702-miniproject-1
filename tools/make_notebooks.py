@@ -122,6 +122,8 @@ Os experimentos são distribuídos entre as GPUs visíveis ({workers} por GPU, a
 
 **Antes de executar (Kaggle):**
 1. *Settings → Accelerator*: **GPU T4 ×2**. *Settings → Internet*: **On**.
+   *Add Input → Datasets*: busque **cifar10-python** e anexe um dataset com a versão Python do CIFAR-10
+   (pasta `cifar-10-batches-py` ou arquivo `cifar-10-python.tar.gz`). Sem ele, o download do servidor original é muito lento.
 2. *Add-ons → Secrets*: `GITHUB_TOKEN` (obrigatório se o repositório for privado) e `WANDB_API_KEY`
    (opcional — sem ele tudo continua salvo localmente). Marque os dois como anexados a este notebook.
 3. Use **Save Version → Save & Run All (Commit)**: `/kaggle/working` (com `outputs/` e `outputs.zip`) fica salvo na aba *Output*.
@@ -165,6 +167,26 @@ import pandas as pd
 
 WORKERS_PER_GPU = {workers}  # experimentos simultâneos por GPU
 RESUME_FROM = ""  # ex.: "/kaggle/input/<output-da-versao-anterior>/outputs" para retomar
+
+# CIFAR-10: usa a cópia anexada como Input do Kaggle (segundos), em vez do servidor original (lento).
+# Procura "cifar-10-batches-py" ou "cifar-10-python.tar.gz" em qualquer Input anexado.
+import glob
+import tarfile
+
+DATA_DIR = os.path.join(REPO_DIR, "data")
+os.makedirs(DATA_DIR, exist_ok=True)
+if not os.path.isdir(os.path.join(DATA_DIR, "cifar-10-batches-py")):
+    folders = glob.glob("/kaggle/input/**/cifar-10-batches-py", recursive=True)
+    archives = glob.glob("/kaggle/input/**/cifar-10-python.tar.gz", recursive=True)
+    if folders:
+        shutil.copytree(folders[0], os.path.join(DATA_DIR, "cifar-10-batches-py"))
+        print(f"CIFAR-10 copiado de {{folders[0]}}")
+    elif archives:
+        with tarfile.open(archives[0]) as tar:
+            tar.extractall(DATA_DIR)
+        print(f"CIFAR-10 extraído de {{archives[0]}}")
+    else:
+        print("AVISO: CIFAR-10 não encontrado nos Inputs; será baixado do servidor original (pode levar muitos minutos).")
 
 # Onde os resultados são gravados (lido por run_experiment.py, grid_search.py e report_utils.py)
 os.environ["EXP_OUTPUT_DIR"] = "/kaggle/working/outputs"
