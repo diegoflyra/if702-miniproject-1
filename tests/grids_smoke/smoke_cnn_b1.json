@@ -1,0 +1,48 @@
+{
+  "block": "smoke_cnn_b1",
+  "model": "cnn",
+  "k_folds": 3,
+  "screening_folds": [
+    1,
+    2
+  ],
+  "finalists": 1,
+  "base": {
+    "subset_size": 300,
+    "batch_size": 32,
+    "epochs": 2,
+    "patience": 0,
+    "eval_train": true,
+    "seed": 42,
+    "optimizer": "adam",
+    "lr": 0.001,
+    "tags": [
+      "smoke_test"
+    ],
+    "project": "cifar10-rn-smoke-test",
+    "filters": 8,
+    "fc_neurons": [
+      16
+    ],
+    "kernel_size": 3,
+    "padding": "same"
+  },
+  "grid": {
+    "conv_blocks": [
+      2,
+      6
+    ],
+    "reducao": [
+      {
+        "stride": 1,
+        "pool_size": 2,
+        "_label": "maxpool"
+      },
+      {
+        "stride": 2,
+        "pool_size": 0,
+        "_label": "stride2"
+      }
+    ]
+  }
+}

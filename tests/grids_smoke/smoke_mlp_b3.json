@@ -1,0 +1,26 @@
+{
+  "block": "smoke_mlp_b3",
+  "model": "mlp",
+  "k_folds": 3,
+  "screening_folds": [
+    1,
+    2
+  ],
+  "finalists": 1,
+  "base_from": [
+    "smoke_mlp_b2",
+    "smoke_mlp_checagem"
+  ],
+  "base": {
+    "epochs": 3
+  },
+  "grid": {
+    "dropout": [
+      0.3
+    ],
+    "loss_fn": [
+      "cross_entropy",
+      "mse"
+    ]
+  }
+}

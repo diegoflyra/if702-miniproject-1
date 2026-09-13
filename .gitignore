@@ -1,0 +1,9 @@
+venv/
+__pycache__/
+*.pth
+data/
+wandb/
+checkpoints/
+.ipynb_checkpoints/
+.env
+outputs_smoke_test/

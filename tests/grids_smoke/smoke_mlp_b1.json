@@ -1,0 +1,35 @@
+{
+  "block": "smoke_mlp_b1",
+  "model": "mlp",
+  "k_folds": 3,
+  "screening_folds": [
+    1,
+    2
+  ],
+  "finalists": 2,
+  "max_parameters": 200000,
+  "base": {
+    "subset_size": 300,
+    "batch_size": 32,
+    "epochs": 2,
+    "patience": 0,
+    "eval_train": true,
+    "seed": 42,
+    "optimizer": "adam",
+    "lr": 0.001,
+    "tags": [
+      "smoke_test"
+    ],
+    "project": "cifar10-rn-smoke-test"
+  },
+  "grid": {
+    "mlp_layers": [
+      1,
+      2
+    ],
+    "mlp_neurons": [
+      32,
+      4096
+    ]
+  }
+}

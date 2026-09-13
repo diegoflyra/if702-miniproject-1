@@ -1,0 +1,42 @@
+{
+  "block": "mlp_b0_referencia",
+  "model": "mlp",
+  "k_folds": 5,
+  "screening_folds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "descricao": "Referências: regressão logística e a MLP do notebook original (64-128-64), com o mesmo protocolo dos blocos.",
+  "base": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "momentum": 0.9,
+    "weight_decay": 0.0,
+    "batch_size": 128,
+    "epochs": 40,
+    "patience": 5,
+    "eval_train": true,
+    "activation": "relu",
+    "loss_fn": "cross_entropy",
+    "dropout": 0.0,
+    "seed": 42
+  },
+  "configs": [
+    {
+      "mlp_layers": 0,
+      "_label": "linear"
+    },
+    {
+      "mlp_layers": 3,
+      "mlp_neurons": [
+        64,
+        128,
+        64
+      ],
+      "_label": "original_64-128-64"
+    }
+  ]
+}

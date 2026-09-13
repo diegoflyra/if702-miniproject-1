@@ -1,0 +1,30 @@
+{
+  "block": "cnn_b2_otimizacao",
+  "model": "cnn",
+  "k_folds": 5,
+  "screening_folds": [
+    1,
+    2,
+    3
+  ],
+  "finalists": 3,
+  "descricao": "Bloco 2 — Otimização: algoritmo × taxa de aprendizagem sobre a topologia campeã do Bloco 1.",
+  "base_from": [
+    "cnn_b1_topologia"
+  ],
+  "grid": {
+    "optimizer": [
+      "sgd",
+      "adam"
+    ],
+    "lr": [
+      0.0001,
+      0.0003,
+      0.001,
+      0.003,
+      0.01,
+      0.03,
+      0.1
+    ]
+  }
+}

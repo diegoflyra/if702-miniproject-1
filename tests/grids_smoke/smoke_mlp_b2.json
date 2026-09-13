@@ -1,0 +1,22 @@
+{
+  "block": "smoke_mlp_b2",
+  "model": "mlp",
+  "k_folds": 3,
+  "screening_folds": [
+    1,
+    2
+  ],
+  "finalists": 1,
+  "base_from": [
+    "smoke_mlp_b1"
+  ],
+  "grid": {
+    "optimizer": [
+      "sgd",
+      "adam"
+    ],
+    "lr": [
+      0.01
+    ]
+  }
+}

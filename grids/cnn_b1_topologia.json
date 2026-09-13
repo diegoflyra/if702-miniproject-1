@@ -1,0 +1,60 @@
+{
+  "block": "cnn_b1_topologia",
+  "model": "cnn",
+  "k_folds": 5,
+  "screening_folds": [
+    1,
+    2,
+    3
+  ],
+  "finalists": 3,
+  "max_parameters": 20000000,
+  "descricao": "Bloco 1 — Topologia: blocos convolucionais × janela de convolução × padding × forma de reduzir a resolução (max pooling 2×2 ou stride 2).",
+  "base": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "momentum": 0.9,
+    "weight_decay": 0.0,
+    "batch_size": 128,
+    "epochs": 40,
+    "patience": 5,
+    "eval_train": true,
+    "activation": "relu",
+    "loss_fn": "cross_entropy",
+    "filters": 64,
+    "filters_growth": "double",
+    "convs_per_block": 1,
+    "fc_neurons": [
+      512
+    ],
+    "cnn_dropout": 0.0,
+    "seed": 42
+  },
+  "grid": {
+    "conv_blocks": [
+      2,
+      3,
+      4
+    ],
+    "kernel_size": [
+      3,
+      5
+    ],
+    "padding": [
+      "same",
+      "valid"
+    ],
+    "reducao": [
+      {
+        "stride": 1,
+        "pool_size": 2,
+        "_label": "maxpool"
+      },
+      {
+        "stride": 2,
+        "pool_size": 0,
+        "_label": "stride2"
+      }
+    ]
+  }
+}

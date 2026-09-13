@@ -1,0 +1,32 @@
+{
+  "block": "mlp_b3_regularizacao",
+  "model": "mlp",
+  "k_folds": 5,
+  "screening_folds": [
+    1,
+    2,
+    3
+  ],
+  "finalists": 3,
+  "descricao": "Bloco 3 — Regularização e erro: taxa de dropout × função de erro sobre a melhor rede dos Blocos 2 e checagem.",
+  "base_from": [
+    "mlp_b2_otimizacao",
+    "mlp_b2_checagem"
+  ],
+  "base": {
+    "epochs": 50,
+    "patience": 7
+  },
+  "grid": {
+    "dropout": [
+      0.0,
+      0.2,
+      0.3,
+      0.5
+    ],
+    "loss_fn": [
+      "cross_entropy",
+      "mse"
+    ]
+  }
+}

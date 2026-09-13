@@ -1,0 +1,48 @@
+{
+  "block": "cnn_b0_referencia",
+  "model": "cnn",
+  "k_folds": 5,
+  "screening_folds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "descricao": "Referência: LeNet-5 adaptada do notebook original, com o mesmo protocolo dos blocos.",
+  "base": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "momentum": 0.9,
+    "weight_decay": 0.0,
+    "batch_size": 128,
+    "epochs": 40,
+    "patience": 5,
+    "eval_train": true,
+    "activation": "relu",
+    "loss_fn": "cross_entropy",
+    "filters": 64,
+    "filters_growth": "double",
+    "convs_per_block": 1,
+    "fc_neurons": [
+      512
+    ],
+    "cnn_dropout": 0.0,
+    "seed": 42
+  },
+  "configs": [
+    {
+      "conv_blocks": 2,
+      "filters": 32,
+      "kernel_size": 3,
+      "stride": 1,
+      "padding": "same",
+      "pool_size": 2,
+      "fc_neurons": [
+        120,
+        84
+      ],
+      "_label": "lenet_original"
+    }
+  ]
+}

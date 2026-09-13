@@ -1,0 +1,42 @@
+{
+  "block": "mlp_b1_topologia",
+  "model": "mlp",
+  "k_folds": 5,
+  "screening_folds": [
+    1,
+    2,
+    3
+  ],
+  "finalists": 3,
+  "descricao": "Bloco 1 — Topologia: número de camadas ocultas × neurônios por camada, com otimização padrão e sem regularização.",
+  "base": {
+    "optimizer": "adam",
+    "lr": 0.001,
+    "momentum": 0.9,
+    "weight_decay": 0.0,
+    "batch_size": 128,
+    "epochs": 40,
+    "patience": 5,
+    "eval_train": true,
+    "activation": "relu",
+    "loss_fn": "cross_entropy",
+    "dropout": 0.0,
+    "seed": 42
+  },
+  "grid": {
+    "mlp_layers": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "mlp_neurons": [
+      128,
+      256,
+      512,
+      1024,
+      2048
+    ]
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "block": "cnn_b2_checagem",
+  "model": "cnn",
+  "k_folds": 5,
+  "screening_folds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "descricao": "Checagem de interação: 2º e 3º colocados do Bloco 1 treinados com o otimizador campeão do Bloco 2.",
+  "base_from": [
+    "cnn_b2_otimizacao"
+  ],
+  "grid_from_ranking": {
+    "block": "cnn_b1_topologia",
+    "ranks": [
+      2,
+      3
+    ],
+    "keys": [
+      "conv_blocks",
+      "kernel_size",
+      "padding",
+      "stride",
+      "pool_size"
+    ]
+  }
+}

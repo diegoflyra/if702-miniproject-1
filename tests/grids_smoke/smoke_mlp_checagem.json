@@ -1,0 +1,23 @@
+{
+  "block": "smoke_mlp_checagem",
+  "model": "mlp",
+  "k_folds": 3,
+  "screening_folds": [
+    1,
+    2,
+    3
+  ],
+  "base_from": [
+    "smoke_mlp_b2"
+  ],
+  "grid_from_ranking": {
+    "block": "smoke_mlp_b1",
+    "ranks": [
+      2
+    ],
+    "keys": [
+      "mlp_layers",
+      "mlp_neurons"
+    ]
+  }
+}
