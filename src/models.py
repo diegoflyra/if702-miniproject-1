@@ -187,7 +187,8 @@ class CNN(nn.Module):
                 raise ValueError(
                     f"Configuração inválida no bloco {i + 1}: entrada {tuple(probe.shape[1:])} ficou pequena demais "
                     f"para kernel_size={kernel_size}, stride={stride}, padding={padding}, pool_size={pool_size}. "
-                    f"Reduza --conv_blocks/--stride/--pool_size ou use --padding same."
+                    f"Reduza --conv_blocks/--stride/--pool_size"
+                    + (" ou use --padding same." if padding != "same" else ".")
                 ) from exc
             if probe.shape[-1] < 1 or probe.shape[-2] < 1:
                 raise ValueError(f"Bloco {i + 1} reduziu o mapa de ativação para {tuple(probe.shape[1:])}.")

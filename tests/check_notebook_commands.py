@@ -121,5 +121,5 @@ def main(paths):
 
 
 if __name__ == "__main__":
-    default = [os.path.join(ROOT, "Kaggle_MLP.ipynb"), os.path.join(ROOT, "Kaggle_CNN.ipynb")]
+    default = [os.path.join(ROOT, f"Kaggle_{n}.ipynb") for n in ("MLP", "CNN", "Extra")]
     main(sys.argv[1:] or default)

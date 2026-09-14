@@ -26,6 +26,7 @@ EXPECTED = {  # bloco: (combinações, válidas) com o campeão fictício padrã
     "mlp_b0_referencia": (2, 2), "mlp_b1_topologia": (25, 25), "mlp_b2_otimizacao": (14, 14),
     "mlp_b3_regularizacao": (8, 8),
     "cnn_b0_referencia": (1, 1), "cnn_b1_topologia": (24, 20), "cnn_b2_otimizacao": (14, 14),
+    "mlp_b3b_dropout_longo": (4, 4), "cnn_b3b_pooling": (9, 6),
 }
 
 specs = {gs.load_spec(p)["block"]: p for p in sorted(glob.glob(os.path.join(ROOT, "grids", "*.json")))}

@@ -403,7 +403,6 @@ def run_block(spec_path, gpus=None, workers_per_gpu=1, dry_run=False, assume=Non
     screening = sorted(spec["screening_folds"])
     all_folds = list(range(1, k + 1))
     out = grid_dir(block)
-    os.makedirs(out, exist_ok=True)
 
     base, source = resolve_base(spec, assume=assume)
     configs = expand(spec, base)
@@ -426,6 +425,7 @@ def run_block(spec_path, gpus=None, workers_per_gpu=1, dry_run=False, assume=Non
     if dry_run:
         return {"spec": spec, "base": base, "configs": configs, "valid": valid, "table": table}
 
+    os.makedirs(out, exist_ok=True)
     _json_write(os.path.join(out, "spec.json"), {**spec, "base_resolvida": base, "base_herdada_de": source})
     _csv_write(os.path.join(out, "configs.csv"), table)
 

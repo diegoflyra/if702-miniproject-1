@@ -483,13 +483,99 @@ descartadas e listadas abaixo. Épocas e paciência aumentadas.
                    "Compare com as classes mais difíceis das MLPs: as convoluções resolveram as mesmas confusões?"),
 ]
 
+# =============================================================================== EXTRA
+extra = [
+    md(f"""
+# CIFAR-10 — Experimentos complementares
+
+A análise dos notebooks principais deixou duas perguntas em aberto. Este notebook as responde com o **mesmo protocolo**
+(5 folds estratificados com a mesma seed, portanto as mesmas partições; escolha pela validação; teste revelado só no fim):
+
+| Experimento | Lacuna identificada | O que muda |
+|---|---|---|
+| A — MLP: dropout com mais épocas | No Bloco 3, dropout 0,5 atingiu a melhor época perto do limite (42–48 de 50): o resultado pode ter sido cortado pelo orçamento. | dropout × função de erro com **100 épocas e paciência 10** |
+| B — CNN: janela de pooling | No Bloco 3, com 4 blocos, só o pooling 2×2 era válido (3×3 colapsa o mapa; sem pooling = 270 M parâmetros). | blocos convolucionais × **janela de pooling** |
+
+As receitas fixas são exatamente as dos campeões dos notebooks principais (escritas explicitamente nos grids, sem depender
+dos resultados anteriores). A combinação 4 blocos + pooling 2×2 do Experimento B **reproduz o campeão da CNN** e serve de
+checagem de reprodutibilidade.
+
+**Tempo estimado:** ~40 min com 2× T4 (A: ~15 min; B: ~25 min).
+
+**Antes de executar (Kaggle):** mesmas configurações dos notebooks principais — *GPU T4 ×2*, *Internet On*, Input
+**cifar10-python** e secrets `GITHUB_TOKEN` / `WANDB_API_KEY` anexados. Execute com **Save Version → Save & Run All**.
+"""),
+    *setup(2),
+
+    md(f"""
+## Experimento A — MLP: dropout e função de erro com orçamento maior
+
+**Pergunta:** com mais épocas, dropout 0,5 alcança ou supera o dropout 0,2 do campeão? A vantagem da entropia cruzada
+sobre MSE se mantém quando as duas têm tempo para convergir?
+
+**Receita fixa (campeão da MLP):** 4 camadas × 256 neurônios, ReLU, Adam lr 3e-4, batch 128.
+O dropout 0,2 com entropia cruzada é o próprio campeão, re-treinado no novo orçamento para uma comparação justa.
+
+{grid_table("mlp_b3b_dropout_longo")}
+
+**O que observar:** `melhor_epoca_media` (agora com folga até 100), a `val/accuracy` do dropout 0,5 em relação ao 0,2
+e o `gap/accuracy`.
+"""),
+    code("!python src/grid_search.py grids/mlp_b3b_dropout_longo.json --workers_per_gpu 2"),
+    code('rep.grid_ranking("mlp_b3b_dropout_longo", "final")'),
+    code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn")'),
+    code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn", value="melhor_epoca_media")'),
+    code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn", value="gap/accuracy_mean")'),
+    code('rep.show_champion("mlp_b3b_dropout_longo")\nrep.plot_finalists("mlp_b3b_dropout_longo")'),
+    analysis("Experimento A", ["Dropout 0,5 precisou de quantas épocas? Alcançou o 0,2?",
+                               "O resultado do Bloco 3 estava limitado pelo orçamento de épocas?",
+                               "Entropia cruzada vs MSE com tempo suficiente:"]),
+    backup(),
+
+    md(f"""
+## Experimento B — CNN: janela de max pooling
+
+**Pergunta:** qual janela de pooling extrai melhor as características espaciais, e como isso interage com a profundidade?
+Janelas maiores reduzem a resolução mais rápido (menos parâmetros e menos custo), mas descartam informação espacial
+mais cedo.
+
+**Receita fixa (campeão da CNN):** 64 filtros dobrando por bloco, kernel 3×3, padding `same`, stride 1, camada densa de 512,
+BatchNorm, dropout 0,5, Adam lr 1e-3. Combinações cujo mapa espacial chega a 0×0 são descartadas antes do treino.
+
+{grid_table("cnn_b3b_pooling")}
+
+**O que observar:** o heatmap blocos × pooling, o número de parâmetros de cada combinação e se a combinação
+4 blocos + pooling 2×2 reproduz a `val/accuracy` do campeão do Bloco 3 (≈ 0,792).
+"""),
+    code("!python src/grid_search.py grids/cnn_b3b_pooling.json --workers_per_gpu 1"),
+    code('rep.discarded_configs("cnn_b3b_pooling")'),
+    code('rep.grid_ranking("cnn_b3b_pooling", "final")'),
+    code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size")'),
+    code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size", value="num_parameters")'),
+    code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size", value="gap/accuracy_mean")'),
+    code('rep.show_champion("cnn_b3b_pooling")\nrep.plot_finalists("cnn_b3b_pooling")'),
+    analysis("Experimento B", ["Qual janela de pooling foi melhor? Depende da profundidade?",
+                               "Relação entre número de parâmetros e desempenho:",
+                               "A combinação 4 blocos + pooling 2×2 reproduziu o campeão do Bloco 3?"]),
+    backup(),
+
+    md("""
+## Teste revelado
+
+O teste é revelado apenas para a melhor configuração de cada experimento (escolhida pela validação), para comparação
+com os campeões dos notebooks principais (MLP: 55,2% ± 0,3%; CNN: 78,3% ± 1,1% no teste).
+"""),
+    code('rep.final_report(["mlp_b3b_dropout_longo", "cnn_b3b_pooling"])'),
+    code("!cd /kaggle/working && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip"),
+]
+
 metadata = {
     "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
     "language_info": {"name": "python"},
     "accelerator": "GPU",
 }
 
-for name, cells in (("Kaggle_MLP.ipynb", mlp), ("Kaggle_CNN.ipynb", cnn)):
+for name, cells in (("Kaggle_MLP.ipynb", mlp), ("Kaggle_CNN.ipynb", cnn), ("Kaggle_Extra.ipynb", extra)):
     nb = {"cells": cells, "metadata": metadata, "nbformat": 4, "nbformat_minor": 5}
     with open(os.path.join(ROOT, name), "w", encoding="utf-8") as f:
         json.dump(nb, f, indent=1, ensure_ascii=False)
