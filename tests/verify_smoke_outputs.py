@@ -180,7 +180,11 @@ invalid = [c for c in cnn_configs if c["valida"] == "False"]
 assert len(cnn_configs) == 4 and len(invalid) == 1 and "B6" in invalid[0]["exp_name"] and "maxpool" in invalid[0]["exp_name"]
 assert len(read_csv(grid_file("smoke_cnn_b1", "ranking_triagem.csv"))) == 3
 check_experiment(champion("smoke_cnn_b1")["exp_name"], 3, [1, 2, 3], 2, "concluido")
-print("  OK grid CNN: combinação com mapa 0×0 descartada antes do treino, campeão com 3 folds")
+# confirm_also: a referência B2_maxpool completa os 3 folds mesmo sem ser finalista
+check_experiment("smoke_cnn_b1__B2_maxpool", 3, [1, 2, 3], 2, "concluido")
+assert "smoke_cnn_b1__B2_maxpool" in {r["exp_name"] for r in read_csv(grid_file("smoke_cnn_b1", "ranking_final.csv"))}
+assert json.load(open(os.path.join(OUT, "smoke_cnn_b1__B2_maxpool", "parametros.json")))["augment"] is True
+print("  OK grid CNN: mapa 0×0 descartado, campeão com 3 folds, referência de confirm_also completa, augmentation herdado da base")
 
 rerun = open(os.path.join(LOGS, "grid_rerun.log")).read()
 assert "0 a executar" in rerun and "ok smoke" not in rerun, "reexecução do grid deveria pular tudo"
@@ -203,6 +207,10 @@ assert list(report["exp_name"]) == [b1["exp_name"], b2["exp_name"], champion("sm
 assert report["test/accuracy"].notna().all() and (report["folds"] == 3).all()
 per_class = rep.plot_per_class([b1["exp_name"], b3["exp_name"]], metric="recall")
 assert list(per_class.index) == list(CIFAR10_CLASSES)
+assert rep.champion_name("smoke_mlp_b1") == b1["exp_name"]
+paired = rep.paired_comparison(final[1]["exp_name"], "smoke_mlp_b1__*")
+assert list(paired["exp_name"]) == [b1["exp_name"]] and paired.loc[0, "folds_comuns"] == 3
+assert paired.loc[0, "vitorias"] + paired.loc[0, "derrotas"] <= 3
 figs = os.listdir(os.path.join(OUT, "_relatorio"))
 for expected in ("heatmap_smoke_mlp_b1_mlp_layers_x_mlp_neurons__val-accuracy_mean.png", "barras_triagem_smoke_mlp_b2.png"):
     assert expected in figs, f"figura ausente: {expected}"

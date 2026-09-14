@@ -385,3 +385,72 @@ def final_report(blocks, save=True):
         df.to_csv(path, index=False)
         print(f"Tabela salva em {path}")
     return df
+
+
+# ============================================================================ comparação pareada por fold
+def champion_name(block):
+    """exp_name do campeão de um bloco (None se ainda não definido)."""
+    path = os.path.join(_grid_dir(block), "campeao.json")
+    return _read_json(path)["exp_name"] if os.path.isfile(path) else None
+
+
+def _fold_metric(exp_name, metric):
+    results = _read_json(os.path.join(output_dir(), exp_name, "resultados.json"))
+    section = "teste" if metric.startswith("test/") else "melhor_val"
+    return {f["fold"]: f.get(section, {}).get(metric) for f in results.get("folds", [])
+            if f.get("status") == "concluido" and f.get(section, {}).get(metric) is not None}
+
+
+def paired_comparison(reference, others, metric="val/accuracy", save=True):
+    """Compara experimentos com uma referência FOLD A FOLD (mesmas partições, mesma seed).
+
+    Como cada fold tem a mesma divisão treino/validação em todos os experimentos, a diferença
+    por fold elimina a variação causada pela partição e revela efeitos pequenos mas consistentes
+    ("venceu em 5 de 5 folds") que a sobreposição de média ± desvio esconde.
+    `others` aceita nomes de experimento ou padrões (ex.: "cnn_b4_augmentation__*").
+    Use métricas de validação para decidir; métricas de teste apenas para relatar.
+    """
+    ref = _fold_metric(reference, metric)
+    names = [os.path.basename(d) for d in experiment_dirs(others) if os.path.basename(d) != reference]
+    rows = []
+    for name in names:
+        values = _fold_metric(name, metric)
+        common = sorted(set(ref) & set(values))
+        if not common:
+            continue
+        deltas = [values[k] - ref[k] for k in common]
+        n = len(deltas)
+        mean = sum(deltas) / n
+        std = (sum((d - mean) ** 2 for d in deltas) / (n - 1)) ** 0.5 if n > 1 else float("nan")
+        rows.append({"exp_name": name, "referencia": reference, "metrica": metric, "folds_comuns": n,
+                     "delta_medio": mean, "delta_std": std, "vitorias": sum(d > 0 for d in deltas),
+                     "derrotas": sum(d < 0 for d in deltas),
+                     **{f"delta_fold_{k}": d for k, d in zip(common, deltas)}})
+    df = pd.DataFrame(rows)
+    if df.empty:
+        print(f"Nenhum experimento com folds em comum com {reference}.")
+        return df
+    df = df.sort_values("delta_medio", ascending=False).reset_index(drop=True)
+
+    fig, ax = plt.subplots(figsize=(8, max(2.5, 0.55 * len(df) + 1)))
+    fold_cols = [c for c in df.columns if c.startswith("delta_fold_")]
+    for i, row in df.iterrows():
+        values = [row[c] for c in fold_cols if pd.notna(row[c])]
+        ax.scatter(values, [i] * len(values), color="#4c72b0", alpha=0.6, s=28, zorder=3)
+        ax.scatter([row["delta_medio"]], [i], color="black", marker="|", s=400, zorder=4)
+    ax.axvline(0, color="#c44e52", lw=1)
+    ax.set_yticks(range(len(df)), [f"{n}  ({v}/{v + d})" for n, v, d in zip(df["exp_name"], df["vitorias"], df["derrotas"])],
+                  fontsize=8)
+    ax.invert_yaxis()
+    ax.set_xlabel(f"Δ {metric} por fold (pontos = folds, traço = média)")
+    ax.set_title(f"Referência: {reference}", fontsize=9)
+    ax.grid(axis="x", alpha=0.3)
+    fig.tight_layout()
+    if save:
+        slug = metric.replace("/", "-")
+        df.to_csv(os.path.join(report_dir(), f"pareado_{reference}__{slug}.csv"), index=False)
+        path = os.path.join(report_dir(), f"pareado_{reference}__{slug}.png")
+        fig.savefig(path, dpi=150)
+        print(f"Tabela e figura salvas em {report_dir()}/pareado_{reference}__{slug}.*")
+    plt.show()
+    return df

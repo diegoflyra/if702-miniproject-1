@@ -25,7 +25,8 @@
       16
     ],
     "kernel_size": 3,
-    "padding": "same"
+    "padding": "same",
+    "augment": true
   },
   "grid": {
     "conv_blocks": [
@@ -44,5 +45,8 @@
         "_label": "stride2"
       }
     ]
-  }
+  },
+  "confirm_also": [
+    "B2_maxpool"
+  ]
 }

@@ -569,13 +569,112 @@ com os campeões dos notebooks principais (MLP: 55,2% ± 0,3%; CNN: 78,3% ± 1,1
     code("!cd /kaggle/working && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip"),
 ]
 
+# =============================================================================== AUGMENTATION
+augmentation = [
+    md(f"""
+# CIFAR-10 — Bloco 4: Data augmentation
+
+**Motivação.** Os campeões atuais foram treinados sem nenhuma transformação nas imagens. Data augmentation cria
+variações plausíveis de cada imagem de treino a cada época, aumentando a diversidade efetiva dos dados sem coletar
+novas imagens. É a principal alavanca de regularização que ainda não foi testada.
+
+**Transformações** (aplicadas apenas no treino, direto na GPU; validação e teste usam as imagens originais):
+- **RandomCrop 32 com padding 4:** desloca a imagem até 4 pixels em qualquer direção;
+- **RandomHorizontalFlip:** espelha horizontalmente com probabilidade 0,5.
+
+**Hipóteses.**
+- **CNN:** as convoluções já são invariantes a pequenos deslocamentos, mas o augmentation reduz a memorização do treino.
+  Com mais diversidade de dados, (a) o overfitting deve cair, (b) a rede de 4 blocos pode voltar a compensar
+  e (c) a necessidade de dropout pode diminuir.
+- **MLP:** sem noção de vizinhança entre pixels, cada deslocamento é, para a MLP, uma entrada completamente nova.
+  O augmentation pode ensinar alguma invariância, mas o ganho deve ser menor e a convergência bem mais lenta.
+
+**Protocolo.** Receitas fixas iguais aos campeões atuais (CNN: 3 blocos, pooling 2×2, BatchNorm — 79,5% no teste;
+MLP: 4×256, Adam 3e-4 — 55,1% no teste), mesmas partições em 5 folds e seed, escolha pela validação e teste revelado
+só no fim. Mais épocas e paciência, pois augmentation retarda a convergência. As configurações **sem** augmentation são
+re-treinadas no mesmo notebook para uma **comparação pareada por fold** justa.
+
+**Tempo estimado:** ~1h30 com 2× T4 (CNN ~1h15; MLP ~15 min).
+
+**Antes de executar (Kaggle):** *GPU T4 ×2*, *Internet On*, Input **cifar10-python** e secrets `GITHUB_TOKEN` /
+`WANDB_API_KEY` anexados. Execute com **Save Version → Save & Run All**.
+"""),
+    *setup(2),
+
+    md(f"""
+## Bloco 4 — CNN: augmentation × profundidade × dropout
+
+{grid_table("cnn_b4_augmentation")}
+
+**O que observar:**
+- `val/accuracy` com e sem augmentation (heatmaps lado a lado, mesma escala de cores);
+- `gap/accuracy`: o augmentation deve reduzir a distância entre treino e validação;
+- `melhor_epoca_media`: se ficar perto do limite de 100 épocas, o resultado pode estar limitado pelo orçamento;
+- se a rede de 4 blocos e o dropout mais baixo passam a ganhar com augmentation.
+"""),
+    code("!python src/grid_search.py grids/cnn_b4_augmentation.json --workers_per_gpu 1"),
+    code('rep.grid_ranking("cnn_b4_augmentation", "triagem")'),
+    code('rep.heatmap("cnn_b4_augmentation", row="conv_blocks", col="cnn_dropout", facet="augment")'),
+    code('rep.heatmap("cnn_b4_augmentation", row="conv_blocks", col="cnn_dropout", facet="augment", value="gap/accuracy_mean")'),
+    code('rep.heatmap("cnn_b4_augmentation", row="conv_blocks", col="cnn_dropout", facet="augment", value="melhor_epoca_media")'),
+    code('rep.grid_ranking("cnn_b4_augmentation", "final")'),
+    code('rep.show_champion("cnn_b4_augmentation")\nrep.plot_finalists("cnn_b4_augmentation")'),
+    md("""
+#### Comparação pareada por fold (validação)
+
+Referência: a receita campeã **sem** augmentation (3 blocos, dropout 0,5), treinada neste mesmo notebook.
+Cada ponto é a diferença em um fold; "(4/5)" indica em quantos folds a configuração venceu a referência.
+"""),
+    code('rep.paired_comparison("cnn_b4_augmentation__aug0_B3_do0.5", "cnn_b4_augmentation__*")'),
+    analysis("Bloco 4 — CNN", ["Ganho do augmentation na validação (pareado):", "O gap treino-validação caiu?",
+                               "Com augmentation, 4 blocos passaram a compensar? E o dropout ideal mudou?",
+                               "Algum resultado ficou limitado pelo orçamento de épocas?"]),
+    backup(),
+
+    md(f"""
+## Bloco 4 — MLP: augmentation × dropout
+
+{grid_table("mlp_b4_augmentation")}
+
+**O que observar:** o ganho (ou perda) com augmentation, o número de épocas necessário e se, com augmentation,
+o dropout deixa de ser necessário.
+"""),
+    code("!python src/grid_search.py grids/mlp_b4_augmentation.json --workers_per_gpu 2"),
+    code('rep.grid_ranking("mlp_b4_augmentation", "final")'),
+    code('rep.heatmap("mlp_b4_augmentation", row="dropout", col="augment")'),
+    code('rep.heatmap("mlp_b4_augmentation", row="dropout", col="augment", value="melhor_epoca_media")'),
+    code('rep.heatmap("mlp_b4_augmentation", row="dropout", col="augment", value="gap/accuracy_mean")'),
+    code('rep.show_champion("mlp_b4_augmentation")\nrep.plot_finalists("mlp_b4_augmentation")'),
+    code('rep.paired_comparison("mlp_b4_augmentation__aug0_do0.2", "mlp_b4_augmentation__*")'),
+    analysis("Bloco 4 — MLP", ["O augmentation ajudou a MLP? Quanto, comparado à CNN?",
+                               "Quantas épocas a MLP precisou com augmentation?",
+                               "Com augmentation, o dropout ainda é necessário?"]),
+    backup(),
+
+    md("""
+## Teste revelado
+
+Teste dos campeões do Bloco 4 (escolhidos pela validação), para comparar com os campeões anteriores
+(CNN: 79,5% ± 0,4%; MLP: 55,1% ± 0,3%). A comparação pareada no teste é apenas descritiva: a decisão já foi tomada
+pela validação.
+"""),
+    code('rep.final_report(["cnn_b4_augmentation", "mlp_b4_augmentation"])'),
+    code("""
+cnn_campeao = rep.champion_name("cnn_b4_augmentation")
+rep.paired_comparison("cnn_b4_augmentation__aug0_B3_do0.5", [cnn_campeao], metric="test/accuracy")
+rep.plot_per_class(["cnn_b4_augmentation__aug0_B3_do0.5", cnn_campeao], metric="recall")
+"""),
+    code("!cd /kaggle/working && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip"),
+]
+
 metadata = {
     "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
     "language_info": {"name": "python"},
     "accelerator": "GPU",
 }
 
-for name, cells in (("Kaggle_MLP.ipynb", mlp), ("Kaggle_CNN.ipynb", cnn), ("Kaggle_Extra.ipynb", extra)):
+for name, cells in (("Kaggle_MLP.ipynb", mlp), ("Kaggle_CNN.ipynb", cnn), ("Kaggle_Extra.ipynb", extra),
+                    ("Kaggle_Augmentation.ipynb", augmentation)):
     nb = {"cells": cells, "metadata": metadata, "nbformat": 4, "nbformat_minor": 5}
     with open(os.path.join(ROOT, name), "w", encoding="utf-8") as f:
         json.dump(nb, f, indent=1, ensure_ascii=False)

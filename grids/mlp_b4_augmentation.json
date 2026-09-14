@@ -1,0 +1,41 @@
+{
+  "block": "mlp_b4_augmentation",
+  "model": "mlp",
+  "k_folds": 5,
+  "screening_folds": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "descricao": "Bloco 4 da MLP — data augmentation (RandomCrop 32 com padding 4 + flip horizontal, só no treino) × dropout, sobre a receita campeã (4 camadas × 256, Adam 3e-4, entropia cruzada).",
+  "base": {
+    "mlp_layers": 4,
+    "mlp_neurons": [
+      256
+    ],
+    "activation": "relu",
+    "batch_norm": false,
+    "loss_fn": "cross_entropy",
+    "optimizer": "adam",
+    "lr": 0.0003,
+    "momentum": 0.9,
+    "weight_decay": 0.0,
+    "batch_size": 128,
+    "epochs": 150,
+    "patience": 15,
+    "eval_train": true,
+    "seed": 42
+  },
+  "grid": {
+    "augment": [
+      false,
+      true
+    ],
+    "dropout": [
+      0.0,
+      0.2
+    ]
+  }
+}

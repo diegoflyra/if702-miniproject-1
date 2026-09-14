@@ -10,7 +10,8 @@ Fluxo de um bloco (especificado em JSON, ver grids/):
      combinações inválidas (dimensões 0×0, parâmetros demais) são descartadas e registradas;
   3. triagem: cada configuração roda os folds de triagem (ex.: 1-3 de 5), em paralelo entre GPUs;
   4. ranking pela VALIDAÇÃO (média dos folds de triagem) — o teste nunca participa da escolha;
-  5. confirmação: as N finalistas completam os folds restantes (--resume, sem refazer nada);
+  5. confirmação: as N finalistas (e as referências em "confirm_also") completam os folds restantes
+     (--resume, sem refazer nada);
   6. campeão: maior média de validação nos K folds entre as finalistas → campeao.json.
 
 Tudo é retomável: experimentos/folds já concluídos em disco são pulados.
@@ -444,6 +445,8 @@ def run_block(spec_path, gpus=None, workers_per_gpu=1, dry_run=False, assume=Non
     finalists_n = spec["finalists"] if len(screening) < k else len(valid)
     finalists = [r for r in triage if r["completo"]][:finalists_n]
     names = {r["exp_name"] for r in finalists}
+    # Referências que precisam dos K folds mesmo sem estar entre as finalistas (ex.: a versão sem augmentation).
+    names |= {f"{block}__{label}" for label in spec.get("confirm_also", [])} & {c["exp_name"] for c in valid}
     finalist_configs = [c for c in valid if c["exp_name"] in names]
     if len(screening) < k and finalist_configs:
         run_jobs([{"exp_name": c["exp_name"], "params": c["params"], "folds": all_folds} for c in finalist_configs],
