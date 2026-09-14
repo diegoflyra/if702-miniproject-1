@@ -288,20 +288,20 @@ def heatmap(block, row, col, value="val/accuracy_mean", facet=None, stage="triag
     df["_col"] = df[cols].astype(str).agg(" | ".join, axis=1)
     col_order = list(dict.fromkeys(df["_col"]))
     facets = [None] if facet is None else sorted(df[facet].astype(str).unique())
+    vmin, vmax = df[value].min(), df[value].max()  # mesma escala de cores em todos os painéis
     fig, axes = plt.subplots(1, len(facets), figsize=(max(5, 1.3 * df["_col"].nunique()) * len(facets), 4.2),
                              squeeze=False)
     for ax, fval in zip(axes[0], facets):
         sub = df if fval is None else df[df[facet].astype(str) == fval]
         pivot = sub.pivot_table(index=row, columns="_col", values=value, aggfunc="first")
         pivot = pivot.reindex(columns=[c for c in col_order if c in pivot.columns]).sort_index()
-        im = ax.imshow(pivot.values, cmap="viridis", aspect="auto")
+        im = ax.imshow(pivot.values.astype(float), cmap="viridis", aspect="auto", vmin=vmin, vmax=vmax)
         ax.set_xticks(range(len(pivot.columns)), pivot.columns, rotation=35, ha="right", fontsize=8)
         ax.set_yticks(range(len(pivot.index)), pivot.index)
         ax.set_xlabel(" | ".join(cols))
         ax.set_ylabel(row)
         ax.set_title(f"{value}" + (f" — {facet}={fval}" if fval is not None else ""))
-        finite = pivot.values[~pd.isna(pivot.values)]
-        mid = (finite.max() + finite.min()) / 2 if finite.size else 0
+        mid = (vmin + vmax) / 2
         for i in range(pivot.shape[0]):
             for j in range(pivot.shape[1]):
                 v = pivot.values[i, j]
