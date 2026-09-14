@@ -10,10 +10,12 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 if [[ -z "${PYTHON:-}" ]]; then
-    if [[ -n "${VIRTUAL_ENV:-}" ]]; then
-        PYTHON="$VIRTUAL_ENV/bin/python"
-    elif [[ -x venv/bin/python ]]; then
+    # Prioriza o venv da própria pasta do projeto: um $VIRTUAL_ENV ativado de outra cópia do projeto
+    # (ex.: a antiga em /mnt/c) rodaria este código com outro interpretador.
+    if [[ -x venv/bin/python ]]; then
         PYTHON="venv/bin/python"
+    elif [[ -n "${VIRTUAL_ENV:-}" ]]; then
+        PYTHON="$VIRTUAL_ENV/bin/python"
     else
         PYTHON="python3"
     fi
@@ -87,7 +89,7 @@ run "${RESUME[@]}" --folds 1 2 3 --resume | tee "$LOGS/resume_2.log"
 
 # ------------------------------------------------------------------ grid search em miniatura
 GRID=(--gpus 1 --workers_per_gpu 2)
-for block in smoke_mlp_b1 smoke_mlp_b2 smoke_mlp_checagem smoke_mlp_b3 smoke_cnn_b1; do
+for block in smoke_mlp_b1 smoke_mlp_b2 smoke_mlp_checagem smoke_mlp_b3 smoke_cnn_b1 smoke_cnn_confirm; do
     section "Grid $block"
     "$PYTHON" src/grid_search.py "tests/grids_smoke/$block.json" "${GRID[@]}" | tee "$LOGS/grid_$block.log"
 done

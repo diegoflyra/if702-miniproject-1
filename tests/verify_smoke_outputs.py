@@ -186,6 +186,13 @@ assert "smoke_cnn_b1__B2_maxpool" in {r["exp_name"] for r in read_csv(grid_file(
 assert json.load(open(os.path.join(OUT, "smoke_cnn_b1__B2_maxpool", "parametros.json")))["augment"] is True
 print("  OK grid CNN: mapa 0×0 descartado, campeão com 3 folds, referência de confirm_also completa, augmentation herdado da base")
 
+# confirm_also com uma configuração NÃO finalista (finalists=0): só ela completa os folds
+check_experiment("smoke_cnn_confirm__B2_stride2", 3, [1, 2, 3], 2, "concluido")
+check_experiment("smoke_cnn_confirm__B2_maxpool", 3, [1, 2], 2, "parcial")
+assert [r["exp_name"] for r in read_csv(grid_file("smoke_cnn_confirm", "ranking_final.csv"))] == ["smoke_cnn_confirm__B2_stride2"]
+assert champion("smoke_cnn_confirm")["exp_name"] == "smoke_cnn_confirm__B2_stride2"
+print("  OK confirm_also: referência não finalista completou os folds; as demais pararam na triagem")
+
 rerun = open(os.path.join(LOGS, "grid_rerun.log")).read()
 assert "0 a executar" in rerun and "ok smoke" not in rerun, "reexecução do grid deveria pular tudo"
 print("  OK retomada do grid: reexecução não treinou nada")
