@@ -10,7 +10,8 @@ Fluxo de um bloco (especificado em JSON, ver grids/):
      combinações inválidas (dimensões 0×0, parâmetros demais) são descartadas e registradas;
   3. triagem: cada configuração roda os folds de triagem (ex.: 1-3 de 5), em paralelo entre GPUs;
   4. ranking pela VALIDAÇÃO (média dos folds de triagem) — o teste nunca participa da escolha;
-  5. confirmação: as N finalistas (e as referências em "confirm_also") completam os folds restantes
+  5. confirmação: as N finalistas (e as referências em "confirm_also"; "@base" = a configuração idêntica
+     à receita herdada) completam os folds restantes
      (--resume, sem refazer nada);
   6. campeão: maior média de validação nos K folds entre as finalistas → campeao.json.
 
@@ -199,6 +200,23 @@ def expand(spec, base):
         seen.add(name)
         result.append({"exp_name": name, "params": params, "axes": axis_values})
     return result
+
+
+def base_config(spec, base, configs):
+    """Configuração do grid idêntica à receita herdada em todos os eixos (ex.: a versão sem augmentation do campeão).
+
+    Serve de referência pareada e de checagem de reprodutibilidade; None se a receita não estiver no grid.
+    """
+    keys = []
+    for name, values in spec["grid"].items():
+        dict_keys = {k for v in values if isinstance(v, dict) for k in v if k != "_label"}
+        keys += sorted(dict_keys) if dict_keys else [name]
+    if not keys:
+        return None
+    from run_experiment import build_parser
+    parser = build_parser()
+    expected = {k: base[k] if k in base else parser.get_default(k) for k in keys}  # ausente = padrão do argparse
+    return next((c for c in configs if all(c["params"].get(k, parser.get_default(k)) == expected[k] for k in keys)), None)
 
 
 def to_argv(params):
@@ -427,7 +445,9 @@ def run_block(spec_path, gpus=None, workers_per_gpu=1, dry_run=False, assume=Non
         return {"spec": spec, "base": base, "configs": configs, "valid": valid, "table": table}
 
     os.makedirs(out, exist_ok=True)
-    _json_write(os.path.join(out, "spec.json"), {**spec, "base_resolvida": base, "base_herdada_de": source})
+    reference = base_config(spec, base, valid)
+    _json_write(os.path.join(out, "spec.json"), {**spec, "base_resolvida": base, "base_herdada_de": source,
+                                                 "config_base": reference["exp_name"] if reference else None})
     _csv_write(os.path.join(out, "configs.csv"), table)
 
     if gpus is None:
@@ -446,7 +466,10 @@ def run_block(spec_path, gpus=None, workers_per_gpu=1, dry_run=False, assume=Non
     finalists = [r for r in triage if r["completo"]][:finalists_n]
     names = {r["exp_name"] for r in finalists}
     # Referências que precisam dos K folds mesmo sem estar entre as finalistas (ex.: a versão sem augmentation).
-    names |= {f"{block}__{label}" for label in spec.get("confirm_also", [])} & {c["exp_name"] for c in valid}
+    labels = [label for label in spec.get("confirm_also", []) if label != "@base"]
+    names |= {f"{block}__{label}" for label in labels} & {c["exp_name"] for c in valid}
+    if "@base" in spec.get("confirm_also", []) and reference:
+        names.add(reference["exp_name"])
     finalist_configs = [c for c in valid if c["exp_name"] in names]
     if len(screening) < k and finalist_configs:
         run_jobs([{"exp_name": c["exp_name"], "params": c["params"], "folds": all_folds} for c in finalist_configs],

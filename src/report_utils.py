@@ -394,6 +394,12 @@ def champion_name(block):
     return _read_json(path)["exp_name"] if os.path.isfile(path) else None
 
 
+def base_config_name(block):
+    """exp_name da configuração do bloco idêntica à receita herdada (referência pareada), ou None."""
+    path = os.path.join(_grid_dir(block), "spec.json")
+    return _read_json(path).get("config_base") if os.path.isfile(path) else None
+
+
 def _fold_metric(exp_name, metric):
     results = _read_json(os.path.join(output_dir(), exp_name, "resultados.json"))
     section = "teste" if metric.startswith("test/") else "melhor_val"

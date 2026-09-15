@@ -110,4 +110,22 @@ for block in ("mlp_b3_regularizacao", "cnn_b3_regularizacao"):
     assert set(gs.load_spec(specs[block])["base_from"]) == {block.replace("b3_regularizacao", "b2_otimizacao"),
                                                             block.replace("b3_regularizacao", "b2_checagem")}
 
+# @base: com um campeão realista no bloco anterior, a configuração igual à receita herdada existe no grid
+def pick(block, label, **overrides):
+    config = next(c for c in valid_configs(block)[0] if c["exp_name"].endswith("__" + label))
+    return {**config["params"], **overrides}
+
+
+for block, champion_params, expected in (
+        ("mlp_b3b_dropout_longo", pick("mlp_b3_regularizacao", "do0.2_losscross_entropy"), "do0.2_losscross_entropy"),
+        ("mlp_b4_augmentation", pick("mlp_b3b_dropout_longo", "do0.2_losscross_entropy", mlp_layers=4), "aug0_do0.2"),
+        ("cnn_b3b_pooling", {**pick("cnn_b3_regularizacao", "pool2_do0.5_bn1"), "conv_blocks": 4}, "B4_pool2"),
+        ("cnn_b4_augmentation", pick("cnn_b3b_pooling", "B3_pool2", cnn_dropout=0.5), "aug0_B3_do0.5")):
+    valid, configs, spec = valid_configs(block, champion_params=champion_params)
+    base, _ = gs.resolve_base(spec, assume=lambda blocks: fake_champion({"exp_name": "fake", "params": champion_params}, blocks[0]))
+    ref = gs.base_config(spec, base, valid)
+    assert ref is not None and ref["exp_name"].endswith("__" + expected), f"{block}: config_base = {ref and ref['exp_name']}"
+assert gs.load_spec(specs["cnn_b4_augmentation"])["confirm_also"] == ["@base"]
+print("  OK @base: referência pareada resolvida nos blocos complementares e de augmentation")
+
 print(f"\nGrids validados: {len(specs)} blocos, {total} configurações construídas com sucesso")

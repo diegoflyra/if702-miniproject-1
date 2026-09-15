@@ -97,6 +97,11 @@ decidido pelos dados. O campeão de um bloco é lido automaticamente pelo bloco 
 | 2 — Otimização | Qual algoritmo e taxa de aprendizagem fazem a rede campeã convergir melhor? | otimizador × lr |
 | Checagem | A escolha em blocos se sustenta? | 2º e 3º do Bloco 1 com o otimizador campeão |
 | 3 — {"Regularização e erro" if kind == "MLP" else "Pooling e regularização"} | {"Como dropout e função de erro afetam a generalização?" if kind == "MLP" else "Como a janela de pooling, dropout e batch norm afetam a generalização?"} | {"dropout × função de erro" if kind == "MLP" else "pool × dropout × batch norm"} |
+| {"Complementar A — Dropout longo" if kind == "MLP" else "Complementar B — Pooling"} | {"Os perdedores do Bloco 3 só precisavam de mais épocas?" if kind == "MLP" else "Qual janela de pooling é melhor, e como ela interage com a profundidade?"} | {"dropout × função de erro com 100 épocas" if kind == "MLP" else "blocos × janela de pooling"} |
+| Bônus — Data augmentation | Quanto um pré-processamento (crop + flip) acrescenta à rede campeã? | {"augmentation × dropout" if kind == "MLP" else "augmentation × blocos × dropout"} |
+
+O notebook executa **o estudo completo da {kind} em uma única execução** (Save & Run All): cada bloco herda o campeão do
+anterior, e os complementares e o bônus partem do campeão mais recente.
 
 **Protocolo de avaliação.**
 - **Validação cruzada estratificada em 5 folds** sobre as 50.000 imagens de treino, com as mesmas partições em todos os experimentos (comparações pareadas).
@@ -254,26 +259,149 @@ import report_utils as rep
     ]
 
 
-def final_section(prefix, blocks, last_block, per_class_note):
+def complement_mlp():
+    return [
+        md(f"""
+## Complementar A — Dropout com orçamento maior
+
+**Pergunta:** configurações que atingiram a melhor época perto do limite de 50 épocas no Bloco 3 (tipicamente dropout alto)
+mudariam de posição com mais tempo? A vantagem da entropia cruzada sobre MSE se mantém quando as duas convergem?
+
+**Base:** o campeão do Bloco 3, com **100 épocas e paciência 10**. A configuração idêntica ao campeão é re-treinada no
+novo orçamento para uma comparação justa.
+
+{grid_table("mlp_b3b_dropout_longo")}
+
+**O que observar:** `melhor_epoca_media` (agora com folga até 100) e a comparação **pareada por fold** contra a receita campeã.
+"""),
+        run_grid("mlp_b3b_dropout_longo"),
+        code('rep.grid_ranking("mlp_b3b_dropout_longo", "final")'),
+        code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn")'),
+        code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn", value="melhor_epoca_media")'),
+        code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn", value="gap/accuracy_mean")'),
+        code('rep.show_champion("mlp_b3b_dropout_longo")\nrep.plot_finalists("mlp_b3b_dropout_longo")'),
+        md("#### Comparação pareada por fold\n\nReferência: a configuração idêntica à receita campeã do Bloco 3. "
+           "Cada ponto é a diferença em um fold; “(4/5)” indica em quantos folds a configuração venceu a referência."),
+        code('rep.paired_comparison(rep.base_config_name("mlp_b3b_dropout_longo"), "mlp_b3b_dropout_longo__*")'),
+        analysis("Complementar A", ["Quantas épocas as configurações precisaram com o novo limite?",
+                                    "Alguma configuração mudou de posição em relação ao Bloco 3?",
+                                    "Entropia cruzada vs MSE fold a fold:"]),
+        backup(),
+    ]
+
+
+def complement_cnn():
+    return [
+        md(f"""
+## Complementar B — Janela de pooling
+
+**Pergunta:** qual janela de max pooling extrai melhor as características espaciais, e como isso interage com a
+profundidade? Janelas maiores reduzem a resolução mais rápido (menos parâmetros), mas descartam informação espacial mais cedo.
+No Bloco 3, com a profundidade do campeão, várias janelas colapsavam o mapa espacial; aqui a profundidade também varia.
+
+**Base:** o campeão do Bloco 3 (BatchNorm, dropout, otimizador). A combinação idêntica ao campeão é re-treinada e serve de
+**checagem de reprodutibilidade**.
+
+{grid_table("cnn_b3b_pooling")}
+
+**O que observar:** o heatmap blocos × pooling, o tamanho final do mapa espacial (`cnn_shape_saida_por_bloco` em
+`parametros.json`), o número de parâmetros e se a combinação igual ao campeão reproduz a validação do Bloco 3.
+"""),
+        run_grid("cnn_b3b_pooling"),
+        code('rep.discarded_configs("cnn_b3b_pooling")'),
+        code('rep.grid_ranking("cnn_b3b_pooling", "final")'),
+        code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size")'),
+        code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size", value="num_parameters")'),
+        code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size", value="gap/accuracy_mean")'),
+        code('rep.show_champion("cnn_b3b_pooling")\nrep.plot_finalists("cnn_b3b_pooling")'),
+        md("#### Comparação pareada e reprodutibilidade\n\nReferência: a combinação idêntica ao campeão do Bloco 3. "
+           "A tabela seguinte compara a validação dessa repetição com a execução original do Bloco 3 (mesmos folds e seed)."),
+        code('rep.paired_comparison(rep.base_config_name("cnn_b3b_pooling"), "cnn_b3b_pooling__*")'),
+        code("""
+repeticao = rep.base_config_name("cnn_b3b_pooling")
+pd.concat([rep.grid_ranking("cnn_b3_regularizacao", "final").head(1).assign(execucao="Bloco 3 (original)"),
+           rep.grid_ranking("cnn_b3b_pooling", "final").query("exp_name == @repeticao").assign(execucao="Complementar B (repetição)")],
+          ignore_index=True)[["execucao", "exp_name", "val/accuracy_mean", "val/accuracy_std", "melhor_epoca_media"]]
+"""),
+        analysis("Complementar B", ["Qual janela de pooling foi melhor? Depende da profundidade?",
+                                    "Relação entre tamanho final do mapa, parâmetros e desempenho:",
+                                    "A repetição reproduziu o campeão do Bloco 3? Qual o ruído entre execuções?"]),
+        backup(),
+    ]
+
+
+def bonus(kind):
+    block = f"{kind.lower()}_b4_augmentation"
+    base_block = "mlp_b3b_dropout_longo" if kind == "MLP" else "cnn_b3b_pooling"
+    hyp = ("Sem noção de vizinhança entre pixels, cada deslocamento é uma entrada nova para a MLP: o augmentation pode "
+           "ensinar alguma invariância, mas o ganho deve ser pequeno e a convergência lenta."
+           if kind == "MLP" else
+           "Com mais diversidade de dados, (a) o overfitting deve cair, (b) redes mais profundas podem voltar a compensar e "
+           "(c) a necessidade de dropout pode diminuir.")
+    heat = ([code(f'rep.heatmap("{block}", row="dropout", col="augment")'),
+             code(f'rep.heatmap("{block}", row="dropout", col="augment", value="gap/accuracy_mean")'),
+             code(f'rep.heatmap("{block}", row="dropout", col="augment", value="melhor_epoca_media")')]
+            if kind == "MLP" else
+            [code(f'rep.heatmap("{block}", row="conv_blocks", col="cnn_dropout", facet="augment")'),
+             code(f'rep.heatmap("{block}", row="conv_blocks", col="cnn_dropout", facet="augment", value="gap/accuracy_mean")'),
+             code(f'rep.heatmap("{block}", row="conv_blocks", col="cnn_dropout", facet="augment", value="melhor_epoca_media")')])
+    return [
+        md(f"""
+## Bônus — Data augmentation
+
+Data augmentation é um **pré-processamento**, não um hiperparâmetro da rede: por isso fica fora da sequência principal
+de blocos. Cria variações plausíveis de cada imagem de treino a cada época, aumentando a diversidade efetiva dos dados.
+
+**Transformações** (apenas no treino, direto na GPU; validação e teste usam as imagens originais):
+**RandomCrop 32 com padding 4** (desloca até 4 pixels) e **RandomHorizontalFlip** (espelha com probabilidade 0,5).
+
+**Hipótese.** {hyp}
+
+**Base:** o campeão de `{base_block}`, com mais épocas e paciência, pois augmentation retarda a convergência. A receita
+campeã **sem** augmentation é re-treinada no mesmo bloco{" e sempre completa os 5 folds" if kind == "CNN" else ""}, como
+referência pareada.
+
+{grid_table(block)}
+
+**O que observar:** o ganho pareado sobre a referência sem augmentation, a queda do `gap/accuracy` e se a
+`melhor_epoca_media` ficou perto do limite de épocas (resultado possivelmente limitado pelo orçamento).
+"""),
+        run_grid(block),
+        *([code(f'rep.grid_ranking("{block}", "triagem")')] if kind == "CNN" else []),
+        *heat,
+        code(f'rep.grid_ranking("{block}", "final")'),
+        code(f'rep.show_champion("{block}")\nrep.plot_finalists("{block}")'),
+        md("#### Comparação pareada por fold (validação)\n\nReferência: a receita campeã sem augmentation, treinada neste mesmo bloco."),
+        code(f'rep.paired_comparison(rep.base_config_name("{block}"), "{block}__*")'),
+        analysis("Bônus", ["Ganho do augmentation na validação (pareado):", "O gap treino-validação caiu?",
+                           "Mudou a configuração ideal (profundidade/dropout)?" if kind == "CNN" else "Com augmentation, o dropout ainda é necessário?",
+                           "Algum resultado ficou limitado pelo orçamento de épocas?"]),
+        backup(),
+    ]
+
+
+def final_section(prefix, blocks, main_block, bonus_block, per_class_note):
     return [
         md(f"""
 ## Resultado final — teste revelado
 
 Até aqui todas as escolhas foram feitas pela validação cruzada. Agora o conjunto de teste é usado **uma única vez**
 para os campeões de cada bloco e para as referências do Bloco 0. A tabela mostra média ± desvio do teste entre os
-5 modelos (um por fold) de cada configuração.
+5 modelos (um por fold) de cada configuração. O campeão da sequência principal é o de `{main_block}`; o bônus mostra
+quanto o augmentation acrescenta sobre ele.
 """),
         code(f"""
 final = rep.final_report({blocks!r})
 final
 """),
-        md(f"Desempenho por classe no teste: referências do Bloco 0 × campeão final. {per_class_note}"),
+        md(f"Desempenho por classe no teste: referências do Bloco 0 × campeão principal × campeão com augmentation. {per_class_note}"),
         code(f"""
-campeao_final = rep.show_champion("{last_block}")["exp_name"]
-comparar = list(final.loc[final["papel"] == "referência", "exp_name"]) + [campeao_final]
+campeao_principal = rep.champion_name("{main_block}")
+campeao_bonus = rep.champion_name("{bonus_block}")
+comparar = list(final.loc[final["papel"] == "referência", "exp_name"]) + [campeao_principal, campeao_bonus]
 rep.plot_per_class(comparar, metric="recall")
 rep.plot_per_class(comparar, metric="precision")
-pd.read_csv(os.path.join(os.environ["EXP_OUTPUT_DIR"], campeao_final, "matriz_confusao_teste.csv"), index_col=0)
+pd.read_csv(os.path.join(os.environ["EXP_OUTPUT_DIR"], campeao_principal, "matriz_confusao_teste.csv"), index_col=0)
 """),
         code("!cd /kaggle/working && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip"),
         md("## 📝 Conclusões\n\n"
@@ -281,13 +409,15 @@ pd.read_csv(os.path.join(os.environ["EXP_OUTPUT_DIR"], campeao_final, "matriz_co
            "- **Ganho de otimização (Bloco 2) e sensibilidade à taxa de aprendizagem:** _…_\n"
            "- **A checagem confirmou a escolha em blocos?** _…_\n"
            "- **Efeito da regularização/erro (Bloco 3):** _…_\n"
+           "- **O que o experimento complementar corrigiu ou confirmou:** _…_\n"
            "- **Ganho total sobre a referência (teste):** _…_\n"
+           "- **Bônus — quanto o augmentation acrescentou e por quê:** _…_\n"
            "- **Classes mais difíceis e hipótese:** _…_"),
     ]
 
 
 # =============================================================================== MLP
-mlp = [intro("MLP", "4 h", "2–2,5 h", 2), *setup(2),
+mlp = [intro("MLP", "2 h", "1h–1h30", 2), *setup(2),
     md(f"""
 ## Bloco 0 — Referências
 
@@ -379,13 +509,16 @@ e a diferença de convergência entre MSE e entropia cruzada.
                          "MSE vs entropia cruzada: diferença de acurácia e de velocidade de convergência:",
                          "Ganho sobre o Bloco 2 (validação):"]),
     backup(),
+    *complement_mlp(),
+    *bonus("MLP"),
     *final_section("mlp", ["mlp_b0_referencia", "mlp_b1_topologia", "mlp_b2_otimizacao", "mlp_b2_checagem",
-                           "mlp_b3_regularizacao"], "mlp_b3_regularizacao",
+                           "mlp_b3_regularizacao", "mlp_b3b_dropout_longo", "mlp_b4_augmentation"],
+                   "mlp_b3b_dropout_longo", "mlp_b4_augmentation",
                    "Classes com baixo recall indicam confusões sistemáticas (veja a matriz de confusão)."),
 ]
 
 # =============================================================================== CNN
-cnn = [intro("CNN", "10 h", "5–6 h", 1), *setup(1),
+cnn = [intro("CNN", "6 h", "3h–3h30", 1), *setup(1),
     md(f"""
 ## Bloco 0 — Referência
 
@@ -478,193 +611,12 @@ descartadas e listadas abaixo. Épocas e paciência aumentadas.
     analysis("Bloco 3", ["Pooling 2×2 vs 3×3 (ou sem pooling):", "Dropout e batch norm reduziram o gap?",
                          "Houve subajuste com regularização forte?", "Ganho sobre o Bloco 2 (validação):"]),
     backup(),
+    *complement_cnn(),
+    *bonus("CNN"),
     *final_section("cnn", ["cnn_b0_referencia", "cnn_b1_topologia", "cnn_b2_otimizacao", "cnn_b2_checagem",
-                           "cnn_b3_regularizacao"], "cnn_b3_regularizacao",
+                           "cnn_b3_regularizacao", "cnn_b3b_pooling", "cnn_b4_augmentation"],
+                   "cnn_b3b_pooling", "cnn_b4_augmentation",
                    "Compare com as classes mais difíceis das MLPs: as convoluções resolveram as mesmas confusões?"),
-]
-
-# =============================================================================== EXTRA
-extra = [
-    md(f"""
-# CIFAR-10 — Experimentos complementares
-
-A análise dos notebooks principais deixou duas perguntas em aberto. Este notebook as responde com o **mesmo protocolo**
-(5 folds estratificados com a mesma seed, portanto as mesmas partições; escolha pela validação; teste revelado só no fim):
-
-| Experimento | Lacuna identificada | O que muda |
-|---|---|---|
-| A — MLP: dropout com mais épocas | No Bloco 3, dropout 0,5 atingiu a melhor época perto do limite (42–48 de 50): o resultado pode ter sido cortado pelo orçamento. | dropout × função de erro com **100 épocas e paciência 10** |
-| B — CNN: janela de pooling | No Bloco 3, com 4 blocos, só o pooling 2×2 era válido (3×3 colapsa o mapa; sem pooling = 270 M parâmetros). | blocos convolucionais × **janela de pooling** |
-
-As receitas fixas são exatamente as dos campeões dos notebooks principais (escritas explicitamente nos grids, sem depender
-dos resultados anteriores). A combinação 4 blocos + pooling 2×2 do Experimento B **reproduz o campeão da CNN** e serve de
-checagem de reprodutibilidade.
-
-**Tempo estimado:** ~40 min com 2× T4 (A: ~15 min; B: ~25 min).
-
-**Antes de executar (Kaggle):** mesmas configurações dos notebooks principais — *GPU T4 ×2*, *Internet On*, Input
-**cifar10-python** e secrets `GITHUB_TOKEN` / `WANDB_API_KEY` anexados. Execute com **Save Version → Save & Run All**.
-"""),
-    *setup(2),
-
-    md(f"""
-## Experimento A — MLP: dropout e função de erro com orçamento maior
-
-**Pergunta:** com mais épocas, dropout 0,5 alcança ou supera o dropout 0,2 do campeão? A vantagem da entropia cruzada
-sobre MSE se mantém quando as duas têm tempo para convergir?
-
-**Receita fixa (campeão da MLP):** 4 camadas × 256 neurônios, ReLU, Adam lr 3e-4, batch 128.
-O dropout 0,2 com entropia cruzada é o próprio campeão, re-treinado no novo orçamento para uma comparação justa.
-
-{grid_table("mlp_b3b_dropout_longo")}
-
-**O que observar:** `melhor_epoca_media` (agora com folga até 100), a `val/accuracy` do dropout 0,5 em relação ao 0,2
-e o `gap/accuracy`.
-"""),
-    code("!python src/grid_search.py grids/mlp_b3b_dropout_longo.json --workers_per_gpu 2"),
-    code('rep.grid_ranking("mlp_b3b_dropout_longo", "final")'),
-    code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn")'),
-    code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn", value="melhor_epoca_media")'),
-    code('rep.heatmap("mlp_b3b_dropout_longo", row="dropout", col="loss_fn", value="gap/accuracy_mean")'),
-    code('rep.show_champion("mlp_b3b_dropout_longo")\nrep.plot_finalists("mlp_b3b_dropout_longo")'),
-    analysis("Experimento A", ["Dropout 0,5 precisou de quantas épocas? Alcançou o 0,2?",
-                               "O resultado do Bloco 3 estava limitado pelo orçamento de épocas?",
-                               "Entropia cruzada vs MSE com tempo suficiente:"]),
-    backup(),
-
-    md(f"""
-## Experimento B — CNN: janela de max pooling
-
-**Pergunta:** qual janela de pooling extrai melhor as características espaciais, e como isso interage com a profundidade?
-Janelas maiores reduzem a resolução mais rápido (menos parâmetros e menos custo), mas descartam informação espacial
-mais cedo.
-
-**Receita fixa (campeão da CNN):** 64 filtros dobrando por bloco, kernel 3×3, padding `same`, stride 1, camada densa de 512,
-BatchNorm, dropout 0,5, Adam lr 1e-3. Combinações cujo mapa espacial chega a 0×0 são descartadas antes do treino.
-
-{grid_table("cnn_b3b_pooling")}
-
-**O que observar:** o heatmap blocos × pooling, o número de parâmetros de cada combinação e se a combinação
-4 blocos + pooling 2×2 reproduz a `val/accuracy` do campeão do Bloco 3 (≈ 0,792).
-"""),
-    code("!python src/grid_search.py grids/cnn_b3b_pooling.json --workers_per_gpu 1"),
-    code('rep.discarded_configs("cnn_b3b_pooling")'),
-    code('rep.grid_ranking("cnn_b3b_pooling", "final")'),
-    code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size")'),
-    code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size", value="num_parameters")'),
-    code('rep.heatmap("cnn_b3b_pooling", row="conv_blocks", col="pool_size", value="gap/accuracy_mean")'),
-    code('rep.show_champion("cnn_b3b_pooling")\nrep.plot_finalists("cnn_b3b_pooling")'),
-    analysis("Experimento B", ["Qual janela de pooling foi melhor? Depende da profundidade?",
-                               "Relação entre número de parâmetros e desempenho:",
-                               "A combinação 4 blocos + pooling 2×2 reproduziu o campeão do Bloco 3?"]),
-    backup(),
-
-    md("""
-## Teste revelado
-
-O teste é revelado apenas para a melhor configuração de cada experimento (escolhida pela validação), para comparação
-com os campeões dos notebooks principais (MLP: 55,2% ± 0,3%; CNN: 78,3% ± 1,1% no teste).
-"""),
-    code('rep.final_report(["mlp_b3b_dropout_longo", "cnn_b3b_pooling"])'),
-    code("!cd /kaggle/working && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip"),
-]
-
-# =============================================================================== AUGMENTATION
-augmentation = [
-    md(f"""
-# CIFAR-10 — Bloco 4: Data augmentation
-
-**Motivação.** Os campeões atuais foram treinados sem nenhuma transformação nas imagens. Data augmentation cria
-variações plausíveis de cada imagem de treino a cada época, aumentando a diversidade efetiva dos dados sem coletar
-novas imagens. É a principal alavanca de regularização que ainda não foi testada.
-
-**Transformações** (aplicadas apenas no treino, direto na GPU; validação e teste usam as imagens originais):
-- **RandomCrop 32 com padding 4:** desloca a imagem até 4 pixels em qualquer direção;
-- **RandomHorizontalFlip:** espelha horizontalmente com probabilidade 0,5.
-
-**Hipóteses.**
-- **CNN:** as convoluções já são invariantes a pequenos deslocamentos, mas o augmentation reduz a memorização do treino.
-  Com mais diversidade de dados, (a) o overfitting deve cair, (b) a rede de 4 blocos pode voltar a compensar
-  e (c) a necessidade de dropout pode diminuir.
-- **MLP:** sem noção de vizinhança entre pixels, cada deslocamento é, para a MLP, uma entrada completamente nova.
-  O augmentation pode ensinar alguma invariância, mas o ganho deve ser menor e a convergência bem mais lenta.
-
-**Protocolo.** Receitas fixas iguais aos campeões atuais (CNN: 3 blocos, pooling 2×2, BatchNorm — 79,5% no teste;
-MLP: 4×256, Adam 3e-4 — 55,1% no teste), mesmas partições em 5 folds e seed, escolha pela validação e teste revelado
-só no fim. Mais épocas e paciência, pois augmentation retarda a convergência. As configurações **sem** augmentation são
-re-treinadas no mesmo notebook para uma **comparação pareada por fold** justa.
-
-**Tempo estimado:** ~1h30 com 2× T4 (CNN ~1h15; MLP ~15 min).
-
-**Antes de executar (Kaggle):** *GPU T4 ×2*, *Internet On*, Input **cifar10-python** e secrets `GITHUB_TOKEN` /
-`WANDB_API_KEY` anexados. Execute com **Save Version → Save & Run All**.
-"""),
-    *setup(2),
-
-    md(f"""
-## Bloco 4 — CNN: augmentation × profundidade × dropout
-
-{grid_table("cnn_b4_augmentation")}
-
-**O que observar:**
-- `val/accuracy` com e sem augmentation (heatmaps lado a lado, mesma escala de cores);
-- `gap/accuracy`: o augmentation deve reduzir a distância entre treino e validação;
-- `melhor_epoca_media`: se ficar perto do limite de 100 épocas, o resultado pode estar limitado pelo orçamento;
-- se a rede de 4 blocos e o dropout mais baixo passam a ganhar com augmentation.
-"""),
-    code("!python src/grid_search.py grids/cnn_b4_augmentation.json --workers_per_gpu 1"),
-    code('rep.grid_ranking("cnn_b4_augmentation", "triagem")'),
-    code('rep.heatmap("cnn_b4_augmentation", row="conv_blocks", col="cnn_dropout", facet="augment")'),
-    code('rep.heatmap("cnn_b4_augmentation", row="conv_blocks", col="cnn_dropout", facet="augment", value="gap/accuracy_mean")'),
-    code('rep.heatmap("cnn_b4_augmentation", row="conv_blocks", col="cnn_dropout", facet="augment", value="melhor_epoca_media")'),
-    code('rep.grid_ranking("cnn_b4_augmentation", "final")'),
-    code('rep.show_champion("cnn_b4_augmentation")\nrep.plot_finalists("cnn_b4_augmentation")'),
-    md("""
-#### Comparação pareada por fold (validação)
-
-Referência: a receita campeã **sem** augmentation (3 blocos, dropout 0,5), treinada neste mesmo notebook.
-Cada ponto é a diferença em um fold; "(4/5)" indica em quantos folds a configuração venceu a referência.
-"""),
-    code('rep.paired_comparison("cnn_b4_augmentation__aug0_B3_do0.5", "cnn_b4_augmentation__*")'),
-    analysis("Bloco 4 — CNN", ["Ganho do augmentation na validação (pareado):", "O gap treino-validação caiu?",
-                               "Com augmentation, 4 blocos passaram a compensar? E o dropout ideal mudou?",
-                               "Algum resultado ficou limitado pelo orçamento de épocas?"]),
-    backup(),
-
-    md(f"""
-## Bloco 4 — MLP: augmentation × dropout
-
-{grid_table("mlp_b4_augmentation")}
-
-**O que observar:** o ganho (ou perda) com augmentation, o número de épocas necessário e se, com augmentation,
-o dropout deixa de ser necessário.
-"""),
-    code("!python src/grid_search.py grids/mlp_b4_augmentation.json --workers_per_gpu 2"),
-    code('rep.grid_ranking("mlp_b4_augmentation", "final")'),
-    code('rep.heatmap("mlp_b4_augmentation", row="dropout", col="augment")'),
-    code('rep.heatmap("mlp_b4_augmentation", row="dropout", col="augment", value="melhor_epoca_media")'),
-    code('rep.heatmap("mlp_b4_augmentation", row="dropout", col="augment", value="gap/accuracy_mean")'),
-    code('rep.show_champion("mlp_b4_augmentation")\nrep.plot_finalists("mlp_b4_augmentation")'),
-    code('rep.paired_comparison("mlp_b4_augmentation__aug0_do0.2", "mlp_b4_augmentation__*")'),
-    analysis("Bloco 4 — MLP", ["O augmentation ajudou a MLP? Quanto, comparado à CNN?",
-                               "Quantas épocas a MLP precisou com augmentation?",
-                               "Com augmentation, o dropout ainda é necessário?"]),
-    backup(),
-
-    md("""
-## Teste revelado
-
-Teste dos campeões do Bloco 4 (escolhidos pela validação), para comparar com os campeões anteriores
-(CNN: 79,5% ± 0,4%; MLP: 55,1% ± 0,3%). A comparação pareada no teste é apenas descritiva: a decisão já foi tomada
-pela validação.
-"""),
-    code('rep.final_report(["cnn_b4_augmentation", "mlp_b4_augmentation"])'),
-    code("""
-cnn_campeao = rep.champion_name("cnn_b4_augmentation")
-rep.paired_comparison("cnn_b4_augmentation__aug0_B3_do0.5", [cnn_campeao], metric="test/accuracy")
-rep.plot_per_class(["cnn_b4_augmentation__aug0_B3_do0.5", cnn_campeao], metric="recall")
-"""),
-    code("!cd /kaggle/working && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip"),
 ]
 
 metadata = {
@@ -673,8 +625,7 @@ metadata = {
     "accelerator": "GPU",
 }
 
-for name, cells in (("Kaggle_MLP.ipynb", mlp), ("Kaggle_CNN.ipynb", cnn), ("Kaggle_Extra.ipynb", extra),
-                    ("Kaggle_Augmentation.ipynb", augmentation)):
+for name, cells in (("Kaggle_MLP.ipynb", mlp), ("Kaggle_CNN.ipynb", cnn)):
     nb = {"cells": cells, "metadata": metadata, "nbformat": 4, "nbformat_minor": 5}
     with open(os.path.join(ROOT, name), "w", encoding="utf-8") as f:
         json.dump(nb, f, indent=1, ensure_ascii=False)

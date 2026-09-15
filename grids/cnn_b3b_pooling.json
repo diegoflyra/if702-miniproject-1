@@ -10,31 +10,8 @@
     5
   ],
   "max_parameters": 20000000,
-  "descricao": "Complementar ao Bloco 3 da CNN: janela de max pooling × número de blocos com a receita campeã (kernel 3, padding same, BatchNorm, dropout 0,5, Adam 1e-3). No Bloco 3, com 4 blocos, só o pooling 2×2 era válido. A combinação 4 blocos + pooling 2×2 reproduz o campeão (checagem de reprodutibilidade).",
-  "base": {
-    "filters": 64,
-    "filters_growth": "double",
-    "convs_per_block": 1,
-    "kernel_size": 3,
-    "padding": "same",
-    "stride": 1,
-    "fc_neurons": [
-      512
-    ],
-    "activation": "relu",
-    "cnn_dropout": 0.5,
-    "cnn_batch_norm": true,
-    "optimizer": "adam",
-    "lr": 0.001,
-    "momentum": 0.9,
-    "weight_decay": 0.0,
-    "batch_size": 128,
-    "epochs": 50,
-    "patience": 7,
-    "eval_train": true,
-    "loss_fn": "cross_entropy",
-    "seed": 42
-  },
+  "descricao": "Complementar B da CNN: número de blocos × janela de max pooling sobre o campeão do Bloco 3 (no Bloco 3, com 4 blocos, só o pooling 2×2 era válido). A combinação igual ao campeão serve de checagem de reprodutibilidade.",
+  "base": {},
   "grid": {
     "conv_blocks": [
       2,
@@ -46,5 +23,8 @@
       3,
       4
     ]
-  }
+  },
+  "base_from": [
+    "cnn_b3_regularizacao"
+  ]
 }

@@ -9,23 +9,10 @@
     4,
     5
   ],
-  "descricao": "Complementar ao Bloco 3 da MLP: dropout × função de erro com orçamento maior (100 épocas, paciência 10), pois dropout 0,5 atingiu a melhor época perto do limite de 50. Receita fixa = campeão da MLP.",
+  "descricao": "Complementar A da MLP: dropout × função de erro com orçamento maior (100 épocas, paciência 10), sobre o campeão do Bloco 3 — verifica se configurações cortadas pelo limite de 50 épocas mudariam de posição.",
   "base": {
-    "mlp_layers": 4,
-    "mlp_neurons": [
-      256
-    ],
-    "activation": "relu",
-    "batch_norm": false,
-    "optimizer": "adam",
-    "lr": 0.0003,
-    "momentum": 0.9,
-    "weight_decay": 0.0,
-    "batch_size": 128,
     "epochs": 100,
-    "patience": 10,
-    "eval_train": true,
-    "seed": 42
+    "patience": 10
   },
   "grid": {
     "dropout": [
@@ -36,5 +23,8 @@
       "cross_entropy",
       "mse"
     ]
-  }
+  },
+  "base_from": [
+    "mlp_b3_regularizacao"
+  ]
 }

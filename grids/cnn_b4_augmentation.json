@@ -9,30 +9,10 @@
   ],
   "finalists": 2,
   "max_parameters": 20000000,
-  "descricao": "Bloco 4 da CNN — data augmentation (RandomCrop 32 com padding 4 + flip horizontal, aplicados só no treino) × profundidade × dropout, sobre a receita campeã (3 blocos, pooling 2×2, BatchNorm). Mais épocas e paciência, pois augmentation retarda a convergência. A receita campeã sem augmentation (aug0_B3_do0.5) sempre completa os 5 folds, como referência pareada.",
+  "descricao": "Bônus da CNN — data augmentation (RandomCrop 32 com padding 4 + flip horizontal, só no treino) × profundidade × dropout, sobre o campeão do Complementar B. A receita campeã sem augmentation (@base) sempre completa os 5 folds, como referência pareada.",
   "base": {
-    "filters": 64,
-    "filters_growth": "double",
-    "convs_per_block": 1,
-    "kernel_size": 3,
-    "padding": "same",
-    "stride": 1,
-    "pool_size": 2,
-    "fc_neurons": [
-      512
-    ],
-    "activation": "relu",
-    "cnn_batch_norm": true,
-    "optimizer": "adam",
-    "lr": 0.001,
-    "momentum": 0.9,
-    "weight_decay": 0.0,
-    "batch_size": 128,
     "epochs": 100,
-    "patience": 10,
-    "eval_train": true,
-    "loss_fn": "cross_entropy",
-    "seed": 42
+    "patience": 10
   },
   "grid": {
     "augment": [
@@ -49,6 +29,9 @@
     ]
   },
   "confirm_also": [
-    "aug0_B3_do0.5"
+    "@base"
+  ],
+  "base_from": [
+    "cnn_b3b_pooling"
   ]
 }
