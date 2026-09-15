@@ -1,0 +1,1282 @@
+<title>Caderno de Resultados CIFAR-10</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --ground: #eef1f5;
+  --surface: #ffffff;
+  --surface-2: #f6f8fb;
+  --ink: #121722;
+  --ink-2: #465063;
+  --muted: #6f7889;
+  --hair: #dce1e9;
+  --hair-strong: #c5ccd7;
+  --accent: #0d6b66;
+  --accent-soft: #dff0ee;
+  --mlp: #2a78d6;
+  --cnn: #eb6834;
+  --s1: #4a3aa7; --s2: #1baf7a; --s3: #eda100;
+  --pending: #8a5a00;
+  --pending-soft: #fbefd6;
+  --seq-0: #e6eefa; --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec;
+  --seq-4: #2a78d6; --seq-5: #1c5cab; --seq-6: #0d366b;
+  --seq-ink-0: #121722; --seq-ink-1: #121722; --seq-ink-2: #121722; --seq-ink-3: #121722;
+  --seq-ink-4: #ffffff; --seq-ink-5: #ffffff; --seq-ink-6: #ffffff;
+  --shadow: 0 1px 2px rgba(18, 23, 34, 0.05), 0 8px 24px rgba(18, 23, 34, 0.04);
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --ground: #0e1015; --surface: #161a21; --surface-2: #1b2029;
+    --ink: #edf0f5; --ink-2: #b3bac7; --muted: #8b94a5; --hair: #272d37; --hair-strong: #343b47;
+    --accent: #5fc2ba; --accent-soft: #15302e; --mlp: #3987e5; --cnn: #d95926; --s1: #9085e9; --s2: #199e70; --s3: #c98500;
+    --pending: #f0b64a; --pending-soft: #2e2413;
+    --seq-0: #152338; --seq-1: #0d366b; --seq-2: #184f95; --seq-3: #256abf;
+    --seq-4: #5598e7; --seq-5: #9ec5f4; --seq-6: #cde2fb;
+    --seq-ink-0: #edf0f5; --seq-ink-1: #edf0f5; --seq-ink-2: #edf0f5; --seq-ink-3: #edf0f5;
+    --seq-ink-4: #0e1015; --seq-ink-5: #0e1015; --seq-ink-6: #0e1015;
+    --shadow: none;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --ground: #0e1015; --surface: #161a21; --surface-2: #1b2029;
+  --ink: #edf0f5; --ink-2: #b3bac7; --muted: #8b94a5; --hair: #272d37; --hair-strong: #343b47;
+  --accent: #5fc2ba; --accent-soft: #15302e; --mlp: #3987e5; --cnn: #d95926; --s1: #9085e9; --s2: #199e70; --s3: #c98500;
+  --pending: #f0b64a; --pending-soft: #2e2413;
+  --seq-0: #152338; --seq-1: #0d366b; --seq-2: #184f95; --seq-3: #256abf;
+  --seq-4: #5598e7; --seq-5: #9ec5f4; --seq-6: #cde2fb;
+  --seq-ink-0: #edf0f5; --seq-ink-1: #edf0f5; --seq-ink-2: #edf0f5; --seq-ink-3: #edf0f5;
+  --seq-ink-4: #0e1015; --seq-ink-5: #0e1015; --seq-ink-6: #0e1015;
+  --shadow: none;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  margin: 0; background: var(--ground); color: var(--ink);
+  font: 400 16px/1.6 var(--sans); padding: 0 20px;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-underline-offset: 3px; text-decoration-thickness: 1px; }
+a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+code, .mono { font-family: var(--mono); font-size: 0.86em; }
+code { background: var(--surface-2); border: 1px solid var(--hair); border-radius: 4px; padding: 0.05em 0.35em; overflow-wrap: anywhere; }
+
+.shell { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 48px; padding-block: 40px 96px; }
+@media (max-width: 900px) { .shell { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 24px 64px; } }
+
+/* ---------- índice ---------- */
+.toc { position: sticky; top: 24px; align-self: start; font-size: 13.5px; }
+.toc h2 { font: 600 11px/1 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 12px; }
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.toc li ol { margin: 2px 0 8px 12px; padding-left: 10px; border-left: 1px solid var(--hair); }
+.toc a { display: block; color: var(--ink-2); text-decoration: none; padding: 3px 0; line-height: 1.35; }
+.toc a:hover { color: var(--ink); }
+.toc a.active { color: var(--ink); font-weight: 600; }
+@media (max-width: 900px) {
+  .toc { position: static; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 16px; }
+  .toc > ol { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); column-gap: 16px; }
+}
+
+main { min-width: 0; display: grid; gap: 64px; }
+section { scroll-margin-top: 24px; }
+.prose { max-width: 68ch; }
+.prose p { margin: 0 0 12px; }
+
+/* ---------- cabeçalho ---------- */
+.masthead { display: grid; gap: 20px; }
+.eyebrow { font: 600 11.5px/1.2 var(--sans); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); }
+h1 { font: 700 clamp(34px, 5vw, 50px)/1.02 var(--cond); letter-spacing: -0.01em; margin: 0; text-wrap: balance; }
+.lede { font-size: 18px; color: var(--ink-2); max-width: 62ch; margin: 0; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: var(--muted); }
+.meta span { display: inline-flex; align-items: center; gap: 6px; }
+.pill { display: inline-flex; align-items: center; gap: 6px; font: 600 11.5px/1 var(--sans); letter-spacing: 0.02em; padding: 5px 9px; border-radius: 999px; background: var(--pending-soft); color: var(--pending); white-space: nowrap; }
+.pill.ok { background: var(--accent-soft); color: var(--accent); }
+.pill::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.headline { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 620px) { .headline { grid-template-columns: minmax(0, 1fr); } }
+.figure-tile { background: var(--surface); border: 1px solid var(--hair); border-radius: 12px; padding: 20px 22px; box-shadow: var(--shadow); display: grid; gap: 6px; }
+.figure-tile .label { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink-2); font-weight: 500; }
+.key { width: 10px; height: 10px; border-radius: 50%; flex: none; }
+.key.mlp { background: var(--mlp); } .key.cnn { background: var(--cnn); }
+.figure-tile .value { font: 600 44px/1 var(--cond); letter-spacing: -0.01em; }
+.figure-tile .value small { font: 500 17px var(--sans); color: var(--muted); margin-left: 4px; }
+.figure-tile .context { font-size: 13.5px; color: var(--ink-2); }
+.figure-tile .context b { color: var(--ink); font-weight: 600; }
+
+/* ---------- títulos de seção ---------- */
+.section-head { display: grid; gap: 8px; margin-bottom: 24px; }
+h2 { font: 700 32px/1.1 var(--cond); margin: 0; text-wrap: balance; }
+.section-head p { margin: 0; color: var(--ink-2); max-width: 68ch; }
+h3 { font: 600 22px/1.2 var(--cond); margin: 0; text-wrap: balance; }
+h4 { font: 600 11.5px/1.2 var(--sans); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin: 0 0 8px; }
+
+/* ---------- painel de gráfico ---------- */
+.panel { background: var(--surface); border: 1px solid var(--hair); border-radius: 12px; padding: 20px; box-shadow: var(--shadow); min-width: 0; }
+.panel-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 6px 16px; margin-bottom: 12px; }
+.panel-head .title { font-weight: 600; font-size: 15px; }
+.panel-head .sub { font-size: 12.5px; color: var(--muted); }
+.two-up { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+@media (max-width: 760px) { .two-up { grid-template-columns: minmax(0, 1fr); } }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--sans); }
+.axis-text { fill: var(--muted); font-size: 11px; }
+.label-text { fill: var(--ink-2); font-size: 12px; }
+.value-text { fill: var(--ink); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.grid-line { stroke: var(--hair); stroke-width: 1; }
+
+/* ---------- fichas de bloco ---------- */
+.blocks { display: grid; gap: 28px; }
+.block { background: var(--surface); border: 1px solid var(--hair); border-radius: 14px; box-shadow: var(--shadow); overflow: hidden; }
+.block-top { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 16px; align-items: start; padding: 22px 24px 18px; border-bottom: 1px solid var(--hair); }
+.block-no { font: 700 13px/1 var(--mono); color: var(--muted); border: 1px solid var(--hair-strong); border-radius: 6px; padding: 7px 8px; margin-top: 2px; min-width: 38px; text-align: center; }
+.block-title { display: grid; gap: 6px; }
+.block-title .q { color: var(--ink-2); margin: 0; max-width: 70ch; }
+.block-body { padding: 20px 24px 24px; display: grid; gap: 22px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 0; border: 1px solid var(--hair); border-radius: 10px; overflow: hidden; }
+.fact { padding: 12px 14px; display: grid; gap: 3px; background: var(--surface-2); border-right: 1px solid var(--hair); border-bottom: 1px solid var(--hair); margin: 0 -1px -1px 0; }
+.fact dt { font-size: 11.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.fact dd { margin: 0; font-size: 14px; font-variant-numeric: tabular-nums; }
+.fact dd .mono { font-size: 13px; }
+.grid-spec { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13.5px; color: var(--ink-2); }
+.grid-spec b { color: var(--ink); font-weight: 600; font-family: var(--mono); font-size: 12.5px; }
+.chips { display: inline-flex; flex-wrap: wrap; gap: 4px; margin-left: 4px; }
+.chip { font: 500 12px/1 var(--mono); padding: 4px 6px; border-radius: 5px; background: var(--surface-2); border: 1px solid var(--hair); color: var(--ink-2); }
+.split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 980px) { .split { grid-template-columns: minmax(0, 1fr); } }
+.reading ul, .caveats ul { margin: 0; padding-left: 18px; display: grid; gap: 8px; }
+.reading li::marker { color: var(--accent); }
+.caveats { border-left: 2px solid var(--hair-strong); padding-left: 14px; font-size: 14px; color: var(--ink-2); }
+.slides { background: var(--surface-2); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px; font-size: 13.5px; display: grid; gap: 8px; }
+.slides ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.slides code { font-size: 11.5px; }
+
+/* ---------- heatmap ---------- */
+.hm-wrap { overflow-x: auto; }
+.hm-facets { display: flex; flex-wrap: wrap; gap: 18px; }
+.hm-facet-title { font-size: 12.5px; color: var(--ink-2); font-weight: 600; margin-bottom: 6px; }
+.hm { display: grid; gap: 3px; font-variant-numeric: tabular-nums; }
+.hm .h { font-size: 11.5px; color: var(--muted); display: flex; align-items: end; justify-content: center; padding: 0 2px 4px; text-align: center; line-height: 1.2; font-family: var(--mono); }
+.hm .r { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-family: var(--mono); white-space: nowrap; }
+.hm .c { min-width: 58px; height: 40px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12.5px; font-weight: 600; cursor: default; position: relative; }
+.hm .c.champ { box-shadow: inset 0 0 0 2px var(--ink); }
+.hm .c.void { background: repeating-linear-gradient(135deg, var(--surface-2) 0 5px, var(--hair) 5px 6px); color: var(--muted); font-weight: 400; }
+.hm-axis { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
+.hm-scale { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--muted); margin-top: 10px; flex-wrap: wrap; }
+.hm-scale .ramp { display: flex; gap: 2px; }
+.hm-scale .ramp i { width: 18px; height: 10px; border-radius: 2px; display: block; }
+
+/* ---------- tabelas ---------- */
+.table-wrap { overflow-x: auto; border: 1px solid var(--hair); border-radius: 10px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th { text-align: left; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 9px 12px; background: var(--surface-2); border-bottom: 1px solid var(--hair); white-space: nowrap; }
+td { padding: 9px 12px; border-bottom: 1px solid var(--hair); vertical-align: top; }
+tr:last-child td { border-bottom: 0; }
+td.num, th.num { text-align: right; white-space: nowrap; }
+td .mono { font-size: 12.5px; }
+tr.win td { background: var(--accent-soft); }
+.delta-up { color: var(--accent); font-weight: 600; }
+.delta-down { color: var(--ink-2); }
+
+/* ---------- roteiro ---------- */
+.outline td:first-child { font-family: var(--mono); color: var(--muted); width: 1%; white-space: nowrap; }
+.outline td:nth-child(2) { font-weight: 600; min-width: 170px; }
+.outline code { font-size: 11px; }
+.pending-block { border: 1px dashed var(--hair-strong); border-radius: 14px; padding: 22px 24px; display: grid; gap: 14px; background: var(--surface); }
+.callout { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 12px; align-items: start; background: var(--surface); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px; font-size: 14.5px; }
+.callout .tag { font: 600 11px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); padding-top: 4px; }
+dl.protocol { display: grid; grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); margin: 0; border-top: 1px solid var(--hair); }
+dl.protocol dt, dl.protocol dd { padding: 12px 0; border-bottom: 1px solid var(--hair); margin: 0; }
+dl.protocol dt { font-weight: 600; font-size: 14px; padding-right: 16px; }
+dl.protocol dd { color: var(--ink-2); font-size: 14.5px; }
+@media (max-width: 620px) { dl.protocol { grid-template-columns: minmax(0, 1fr); } dl.protocol dt { border-bottom: 0; padding-bottom: 0; } }
+.files { display: grid; gap: 10px; }
+.files div { display: grid; grid-template-columns: minmax(140px, 220px) minmax(0, 1fr); gap: 12px; font-size: 14px; padding-bottom: 10px; border-bottom: 1px solid var(--hair); }
+@media (max-width: 620px) { .files div { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
+
+
+/* ---------- curvas por época ---------- */
+.curves { display: grid; gap: 12px; }
+.curves .legend .line-key { width: 18px; height: 0; border-top: 2px solid; display: inline-block; }
+.curves .legend .line-key.dash { border-top-style: dashed; border-color: var(--muted); }
+.curves .legend .line-key.solid { border-color: var(--muted); }
+.curves-note { font-size: 12.5px; color: var(--muted); }
+.wandb { font-size: 12.5px; color: var(--ink-2); background: var(--surface-2); border: 1px solid var(--hair); border-radius: 8px; padding: 8px 10px; }
+.wandb b { font-weight: 600; color: var(--ink); }
+.crosshair { stroke: var(--hair-strong); stroke-width: 1; }
+.chart-sub { font-size: 12px; color: var(--muted); margin: 0 0 4px; font-weight: 500; }
+
+.figure-tile .bonus-line { border-top: 1px solid var(--hair); padding-top: 8px; margin-top: 4px; }
+
+#tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--surface); font-size: 12.5px; line-height: 1.45; padding: 8px 10px; border-radius: 6px; max-width: 280px; box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
+#tip b { font-weight: 600; }
+footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair); padding-top: 18px; }
+</style>
+
+<div class="shell">
+  <nav class="toc" aria-label="Índice">
+    <h2>Neste caderno</h2>
+    <ol>
+      <li><a href="#resumo">Resumo</a></li>
+      <li><a href="#protocolo">Como os números foram obtidos</a></li>
+      <li><a href="#mlp">MLP</a>
+        <ol>
+          <li><a href="#mlp-b0">Bloco 0 · Referências</a></li>
+          <li><a href="#mlp-b1">Bloco 1 · Topologia</a></li>
+          <li><a href="#mlp-b2">Bloco 2 · Otimização</a></li>
+          <li><a href="#mlp-chk">Checagem de interação</a></li>
+          <li><a href="#mlp-b3">Bloco 3 · Regularização e erro</a></li>
+          <li><a href="#mlp-a">Complementar A · Dropout longo</a></li>
+        </ol>
+      </li>
+      <li><a href="#cnn">CNN</a>
+        <ol>
+          <li><a href="#cnn-b0">Bloco 0 · Referência</a></li>
+          <li><a href="#cnn-b1">Bloco 1 · Topologia espacial</a></li>
+          <li><a href="#cnn-b2">Bloco 2 · Otimização</a></li>
+          <li><a href="#cnn-chk">Checagem de interação</a></li>
+          <li><a href="#cnn-b3">Bloco 3 · BatchNorm e dropout</a></li>
+          <li><a href="#cnn-b">Complementar B · Pooling</a></li>
+        </ol>
+      </li>
+      <li><a href="#comparacao">MLP × CNN por classe</a></li>
+      <li><a href="#bonus">Bônus · Augmentation</a>
+        <ol>
+          <li><a href="#bonus-cnn">CNN</a></li>
+          <li><a href="#bonus-mlp">MLP</a></li>
+        </ol>
+      </li>
+      <li><a href="#licoes">Lições metodológicas</a></li>
+      <li><a href="#roteiro">Roteiro de slides</a></li>
+      <li><a href="#arquivos">Onde está cada coisa</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <!-- ================================================================ RESUMO -->
+    <section id="resumo" class="masthead">
+      <div class="eyebrow">UFPE · Redes Neurais · Estudo de ablação no CIFAR-10</div>
+      <h1>Caderno de Resultados CIFAR-10</h1>
+      <p class="lede">Todos os resultados de MLP e CNN, bloco a bloco, com o que cada experimento mostrou, que gráfico usar e o que dizer nos slides. Documento preliminar para o grupo montar a apresentação.</p>
+      <div class="meta">
+        <span><span class="pill ok">Blocos 0–3, complementares e bônus concluídos</span></span>
+        <span>432 runs no W&amp;B · 10.000 imagens de teste</span>
+      </div>
+
+      <div class="headline">
+        <div class="figure-tile">
+          <div class="label"><i class="key mlp" aria-hidden="true"></i>Melhor MLP · acurácia no teste</div>
+          <div class="value">55,2%<small>± 0,3</small></div>
+          <div class="context">4 camadas × 256 neurônios, Adam lr 3e-4, dropout 0,2. <b>+4,0 p.p.</b> sobre a MLP do notebook original (51,1%).</div>
+          <div class="context bonus-line">Com data augmentation (bônus): <b>57,8% ± 0,2</b></div>
+        </div>
+        <div class="figure-tile">
+          <div class="label"><i class="key cnn" aria-hidden="true"></i>Melhor CNN · acurácia no teste</div>
+          <div class="value">79,5%<small>± 0,4</small></div>
+          <div class="context">3 blocos convolucionais, pooling 2×2, BatchNorm, dropout 0,5. <b>+9,8 p.p.</b> sobre a LeNet original (69,7%) e <b>+24,3 p.p.</b> sobre a melhor MLP.</div>
+          <div class="context bonus-line">Com data augmentation (bônus): <b>86,4% ± 0,6</b>, com 4 blocos</div>
+        </div>
+      </div>
+
+      <div class="two-up">
+        <div class="panel">
+          <div class="panel-head"><span class="title">Evolução da MLP</span><span class="sub">acurácia no teste · média ± desvio em 5 folds · ponto vazado = bônus</span></div>
+          <div class="chart" id="chart-prog-mlp"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="title">Evolução da CNN</span><span class="sub">acurácia no teste · média ± desvio em 5 folds · ponto vazado = bônus</span></div>
+          <div class="chart" id="chart-prog-cnn"></div>
+        </div>
+      </div>
+
+      <div class="callout">
+        <span class="tag">Tese</span>
+        <span>A MLP para em ~55% porque recebe a imagem achatada e perde a vizinhança entre pixels: decide muito por cor e fundo. A CNN aproveita a estrutura espacial por construção e ganha em todas as classes. Dentro de cada rede, os maiores ganhos vieram de <b>regularização</b> (dropout na MLP, BatchNorm na CNN); a otimização rendeu pouco ou nada. Como bônus, <b>data augmentation</b> — um pré-processamento, não um hiperparâmetro — acrescentou <b>+7,4 p.p.</b> à CNN e só <b>+2,7 p.p.</b> à MLP, reforçando que só a CNN consegue explorar a estrutura espacial das imagens.</span>
+      </div>
+    </section>
+
+    <!-- ================================================================ PROTOCOLO -->
+    <section id="protocolo">
+      <div class="section-head">
+        <h2>Como os números foram obtidos</h2>
+        <p>O mesmo protocolo vale para todos os blocos. Vale um slide só para ele: é o que dá credibilidade às comparações.</p>
+      </div>
+      <dl class="protocol">
+        <dt>Dados</dt>
+        <dd>CIFAR-10: 50.000 imagens de treino e 10.000 de teste, 32×32×3, 10 classes balanceadas. O arquivo usado no Kaggle foi conferido por MD5 contra o oficial (ex.: <code>data_batch_1 = c99cafc1…</code>).</dd>
+        <dt>Validação cruzada</dt>
+        <dd>5 folds estratificados sobre o treino (40.000 treino / 10.000 validação por fold), <b>com as mesmas partições em todos os experimentos</b> (seed 42). Por isso as comparações podem ser feitas fold a fold.</dd>
+        <dt>Grid search em blocos</dt>
+        <dd>Cada bloco varia um grupo de hiperparâmetros e herda automaticamente o campeão do bloco anterior (<code>campeao.json</code>). Nenhum valor foi escolhido à mão.</dd>
+        <dt>Triagem e confirmação</dt>
+        <dd>Toda configuração roda os folds 1–3; as 3 melhores completam os folds 4–5. O campeão é a maior acurácia de validação média nos 5 folds.</dd>
+        <dt>Seleção × teste</dt>
+        <dd>Toda escolha usa só a <b>validação</b>. O teste é revelado apenas para os campeões, no fim. Usar o teste para escolher inflaria o número final (vazamento de dados).</dd>
+        <dt>Treino</dt>
+        <dd>Early stopping na <code>val/loss</code>, restauração dos melhores pesos, métricas de treino medidas em modo avaliação (<code>--eval_train</code>) para o gap treino–validação ser justo com dropout.</dd>
+        <dt>Registro</dt>
+        <dd>Cada época vai para <code>historico_treino.csv</code> (loss, acurácia, precision, recall e F1 gerais e por classe) antes de ser espelhada no W&amp;B. Também são gravados <code>parametros.json</code>, <code>resultados.json</code> e <code>melhor_modelo.pth</code>.</dd>
+        <dt>Curvas por época</dt>
+        <dd>Média entre folds, só nas épocas em que todos os folds ainda treinavam: a curva termina quando o primeiro fold aciona o early stopping. Mesmos valores registrados no W&amp;B (passo = época).</dd>
+        <dt>Infraestrutura</dt>
+        <dd>Kaggle, 2× NVIDIA T4, dados inteiros na GPU (normalização e augmentation vetorizados). MLP: ~37 min de relógio; CNN: ~1h45; complementares: ~68 min de GPU.</dd>
+      </dl>
+    </section>
+
+    <!-- ================================================================ MLP -->
+    <section id="mlp">
+      <div class="section-head">
+        <div class="eyebrow">Rede 1</div>
+        <h2>MLP · Perceptron multicamadas</h2>
+        <p>Imagem achatada em 3.072 entradas. Ordem dos blocos: referências → topologia → otimização → checagem → regularização e função de erro, mais um experimento complementar.</p>
+      </div>
+      <div class="blocks">
+
+        <article class="block" id="mlp-b0">
+          <div class="block-top">
+            <span class="block-no">B0</span>
+            <div class="block-title"><h3>Referências</h3><p class="q">De onde partimos? Mesmo protocolo dos blocos, aplicado a um classificador linear e à MLP do notebook original.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="table-wrap"><table id="tbl-mlp-b0"></table></div>
+            <div class="reading"><h4>O que concluir</h4><ul>
+              <li>O classificador linear (regressão logística) fica em <b>38,8%</b> no teste: é o piso sem nenhuma não linearidade.</li>
+              <li>A MLP original (64-128-64) chega a <b>51,1%</b>. Esse é o número contra o qual todo ganho da MLP é medido.</li>
+            </ul></div>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li>Use a tabela acima no slide de referências, junto com a LeNet (CNN, B0).</li>
+              <li>W&amp;B: grupos <code>mlp_b0_referencia__linear</code> e <code>mlp_b0_referencia__original_64-128-64</code>.</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="mlp-b1">
+          <div class="block-top">
+            <span class="block-no">B1</span>
+            <div class="block-title"><h3>Topologia</h3><p class="q">Qual combinação de profundidade e largura absorve melhor o CIFAR-10? Adam 1e-3, sem regularização, early stopping com paciência 5.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="grid-spec"><span>Camadas ocultas<span class="chips"><span class="chip">1</span><span class="chip">2</span><span class="chip">3</span><span class="chip">4</span><span class="chip">5</span></span></span><span>Neurônios<span class="chips"><span class="chip">128</span><span class="chip">256</span><span class="chip">512</span><span class="chip">1024</span><span class="chip">2048</span></span></span><span>= <b>25 configurações</b></span></div>
+            <div class="split">
+              <div class="panel">
+                <div class="panel-head"><span class="title">Acurácia de validação na triagem</span><span class="sub">média nos folds 1–3</span></div>
+                <div id="hm-mlp-b1"></div>
+              </div>
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>Profundidade ajuda até certo ponto:</b> sair de 1 para 2+ camadas rende +1,5 a 2,5 p.p.</li>
+                <li><b>Largura acima de ~256 não ajuda.</b> Redes largas atingem o ótimo mais cedo (época 3–4) e passam a decorar o treino.</li>
+                <li>Quase todas as configurações de 2 a 5 camadas ficam entre 51,5% e 53,1%: diferenças do tamanho do desvio. A frase honesta é “profundidade moderada basta”, não “3×256 é a melhor”.</li>
+                <li><b>Maldição do vencedor ao vivo:</b> o 1º da triagem tinha 53,1% em 3 folds e caiu para 52,7% em 5.</li>
+              </ul></div>
+            </div>
+            <div class="panel curves" id="curves-mlp_b1">
+              <div class="panel-head"><span class="title">Curvas por época · capacidade e overfitting</span><span class="sub">média dos folds 1–3</span></div>
+              <div class="legend" data-legend="mlp_b1"><span><i class="line-key solid"></i>validação</span><span><i class="line-key dash"></i>treino</span></div>
+              <div class="two-up">
+                <div><p class="chart-sub">Acurácia</p><div class="chart" data-curve="mlp_b1" data-metric="accuracy" data-train="1"></div></div>
+                <div><p class="chart-sub">Loss</p><div class="chart" data-curve="mlp_b1" data-metric="loss" data-train="1"></div></div>
+              </div>
+              <div class="wandb"><b>Mesmo gráfico no W&amp;B:</b> painel de linha · eixo x <code>epoch</code> · eixo y <code>val/accuracy e train/accuracy</code> · agrupar por <em>Group</em> · filtro: <code>mlp_b1_topologia__L1_N256</code>, <code>__L3_N256</code>, <code>__L5_N2048</code></div>
+            </div>
+            <dl class="facts">
+              <div class="fact"><dt>Campeão</dt><dd><span class="mono">3 × 256</span></dd></div>
+              <div class="fact"><dt>Validação · 5 folds</dt><dd>52,7% ± 0,7</dd></div>
+              <div class="fact"><dt>Teste</dt><dd>52,5% ± 0,3</dd></div>
+              <div class="fact"><dt>Finalistas empatados</dt><dd>4×256 · 2×256 (±0,3 p.p.)</dd></div>
+            </dl>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li>Figura principal: <code>outputs_mlp/_relatorio/heatmap_mlp_b1_topologia_mlp_layers_x_mlp_neurons__val-accuracy_mean.png</code></li>
+              <li>Apoio (overfitting): <code>…__gap-accuracy_mean.png</code> e as curvas <code>curvas_mlp_b1_topologia__L3_N256+…png</code></li>
+              <li>W&amp;B: filtre grupos por <code>mlp_b1_topologia__</code> e plote <code>val/accuracy</code> por época.</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="mlp-b2">
+          <div class="block-top">
+            <span class="block-no">B2</span>
+            <div class="block-title"><h3>Otimização</h3><p class="q">Com a topologia 3×256 fixa, qual algoritmo e taxa de aprendizagem convergem melhor? SGD usa momentum 0,9.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="grid-spec"><span>Otimizador<span class="chips"><span class="chip">sgd</span><span class="chip">adam</span></span></span><span>lr<span class="chips"><span class="chip">1e-4</span><span class="chip">3e-4</span><span class="chip">1e-3</span><span class="chip">3e-3</span><span class="chip">1e-2</span><span class="chip">3e-2</span><span class="chip">1e-1</span></span></span><span>= <b>14 configurações</b></span></div>
+            <div class="split">
+              <div class="panel">
+                <div class="panel-head"><span class="title">Acurácia de validação na triagem</span><span class="sub">escala de cor a partir de 42%</span></div>
+                <div id="hm-mlp-b2"></div>
+              </div>
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>Adam</b> funciona de 1e-4 a 1e-3 e <b>colapsa em 10%</b> (acaso) a partir de lr 3e-2: a rede passa a prever uma única classe.</li>
+                <li><b>SGD</b> só funciona entre 1e-3 e 3e-2, mas nessa faixa empata com Adam (lr 1e-2 = 53,3%).</li>
+                <li>Adam com lr 3e-4 venceu, com ganho de +0,8 p.p. no teste sobre o Bloco 1.</li>
+              </ul></div>
+            </div>
+            <div class="panel curves" id="curves-mlp_b2">
+              <div class="panel-head"><span class="title">Curvas por época · velocidade de convergência</span><span class="sub">validação · média dos folds 1–3 · cinza = colapso</span></div>
+              <div class="legend" data-legend="mlp_b2"></div>
+              <div class="two-up">
+                <div><p class="chart-sub">Acurácia</p><div class="chart" data-curve="mlp_b2" data-metric="accuracy" data-train="0"></div></div>
+                <div><p class="chart-sub">Loss</p><div class="chart" data-curve="mlp_b2" data-metric="loss" data-train="0"></div></div>
+              </div>
+              <div class="wandb"><b>Mesmo gráfico no W&amp;B:</b> painel de linha · eixo x <code>epoch</code> · eixo y <code>val/accuracy</code> · agrupar por <em>Group</em> · filtro: <code>mlp_b2_otimizacao__optadam_lr0.0003</code>, <code>__optsgd_lr0.01</code>, <code>__optsgd_lr0.0001</code>, <code>__optadam_lr0.03</code></div>
+            </div>
+            <dl class="facts">
+              <div class="fact"><dt>Campeão</dt><dd><span class="mono">adam · lr 3e-4</span></dd></div>
+              <div class="fact"><dt>Validação · 5 folds</dt><dd>53,4% ± 0,5</dd></div>
+              <div class="fact"><dt>Teste</dt><dd>53,3% ± 0,3</dd></div>
+              <div class="fact"><dt>Mais rápido para convergir</dt><dd>Adam: época 5–7</dd></div>
+            </dl>
+            <div class="caveats"><h4>Ressalvas</h4><ul>
+              <li>SGD com lr ≤ 3e-4 usou as 40 épocas inteiras e ainda estava aprendendo: o resultado ruim é limitado pelo orçamento, não prova que esse SGD seja pior.</li>
+              <li>O colapso em 10% não aparece como “divergência” (a loss não virou NaN). Nos slides, chame de <b>colapso</b>.</li>
+            </ul></div>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li>Figura principal: <code>outputs_mlp/_relatorio/heatmap_mlp_b2_otimizacao_optimizer_x_lr__val-accuracy_mean.png</code></li>
+              <li>Velocidade: <code>…__melhor_epoca_media.png</code> (SGD com lr baixo esbarra no limite de 40 épocas)</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="mlp-chk">
+          <div class="block-top">
+            <span class="block-no">CHK</span>
+            <div class="block-title"><h3>Checagem de interação</h3><p class="q">A melhor topologia com Adam 1e-3 continua melhor com o otimizador novo? O 2º e o 3º do Bloco 1 foram treinados com Adam 3e-4 nos 5 folds.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="table-wrap"><table id="tbl-mlp-chk"></table></div>
+            <div class="reading"><h4>O que concluir</h4><ul>
+              <li>4×256 superou 3×256 por apenas 0,1 p.p., dentro do ruído, e virou a base do Bloco 3.</li>
+              <li>As topologias do topo são <b>estatisticamente equivalentes</b>: a busca em blocos não deixou passar nenhuma rede claramente melhor.</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="mlp-b3">
+          <div class="block-top">
+            <span class="block-no">B3</span>
+            <div class="block-title"><h3>Regularização e função de erro</h3><p class="q">Com a rede 4×256 convergindo bem, como a taxa de dropout e a função de erro afetam a generalização? 50 épocas, paciência 7.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="grid-spec"><span>Dropout<span class="chips"><span class="chip">0</span><span class="chip">0,2</span><span class="chip">0,3</span><span class="chip">0,5</span></span></span><span>Função de erro<span class="chips"><span class="chip">cross_entropy</span><span class="chip">mse</span></span></span><span>= <b>8 configurações</b></span></div>
+            <div class="split">
+              <div class="panel">
+                <div class="panel-head"><span class="title">Acurácia de validação na triagem</span><span class="sub">média nos folds 1–3</span></div>
+                <div id="hm-mlp-b3"></div>
+              </div>
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>Dropout 0,2 deu o maior ganho de uma única etapa na MLP: +1,5 p.p.</b>, bem acima do desvio.</li>
+                <li>O gap treino–validação <b>aumentou</b> (0,144 contra 0,134): o dropout não eliminou o overfitting, ele o <b>atrasou</b> (melhor época 15 contra 7), permitindo mais épocas de aprendizado útil.</li>
+                <li>MSE ficou ~0,3 p.p. abaixo da entropia cruzada e converge mais devagar (época 20 contra 15).</li>
+                <li>Dropout 0,5 causa subajuste (ver Complementar A).</li>
+              </ul></div>
+            </div>
+            <div class="panel curves" id="curves-mlp_b3">
+              <div class="panel-head"><span class="title">Curvas por época · dropout atrasa o overfitting</span><span class="sub">média dos folds 1–3</span></div>
+              <div class="legend" data-legend="mlp_b3"><span><i class="line-key solid"></i>validação</span><span><i class="line-key dash"></i>treino</span></div>
+              <div class="two-up">
+                <div><p class="chart-sub">Acurácia</p><div class="chart" data-curve="mlp_b3" data-metric="accuracy" data-train="1"></div></div>
+                <div><p class="chart-sub">Loss</p><div class="chart" data-curve="mlp_b3" data-metric="loss" data-train="1"></div></div>
+              </div>
+              <div class="wandb"><b>Mesmo gráfico no W&amp;B:</b> painel de linha · eixo x <code>epoch</code> · eixo y <code>val/accuracy e train/accuracy</code> · agrupar por <em>Group</em> · filtro: <code>mlp_b3_regularizacao__do0_losscross_entropy</code>, <code>__do0.2_losscross_entropy</code>, <code>__do0.5_losscross_entropy</code></div>
+            </div>
+            <dl class="facts">
+              <div class="fact"><dt>Campeão final da MLP</dt><dd><span class="mono">dropout 0,2 · cross_entropy</span></dd></div>
+              <div class="fact"><dt>Validação · 5 folds</dt><dd>55,0% ± 0,6</dd></div>
+              <div class="fact"><dt>Teste</dt><dd>55,2% ± 0,3</dd></div>
+              <div class="fact"><dt>Ganho sobre o original</dt><dd class="delta-up">+4,0 p.p.</dd></div>
+            </dl>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li>Figura principal: <code>outputs_mlp/_relatorio/heatmap_mlp_b3_regularizacao_dropout_x_loss_fn__val-accuracy_mean.png</code></li>
+              <li>Argumento do “dropout atrasa o overfitting”: curvas <code>curvas_mlp_b3_regularizacao__do0.2_losscross_entropy+…png</code> e <code>…__gap-accuracy_mean.png</code></li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="mlp-a">
+          <div class="block-top">
+            <span class="block-no">+A</span>
+            <div class="block-title"><h3>Complementar A · Dropout com mais épocas</h3><p class="q">No Bloco 3, dropout 0,5 atingiu a melhor época perto do limite de 50. Com 100 épocas e paciência 10, ele alcança o 0,2?</p></div>
+          </div>
+          <div class="block-body">
+            <div class="split">
+              <div class="table-wrap"><table id="tbl-mlp-a"></table></div>
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>O limite de épocas cortou pouco:</b> com o dobro de épocas, dropout 0,5 melhorou só +0,3 p.p.</li>
+                <li>Dropout 0,5 perdeu para 0,2 em <b>5 de 5 folds</b> (−1,25 p.p.). É subajuste real (acurácia de treino 67% contra 70%), não falta de tempo.</li>
+                <li>Entropia cruzada venceu MSE em <b>5 de 5 folds</b> (+0,34 p.p.): pequeno na média, consistente fold a fold.</li>
+                <li>O campeão da MLP não muda.</li>
+              </ul></div>
+            </div>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li><code>outputs_final/_relatorio/heatmap_mlp_b3b_dropout_longo_dropout_x_loss_fn__melhor_epoca_media.png</code> mostra que o dropout 0,5 precisa de ~50–60 épocas.</li>
+              <li>Frase para o slide: “com tempo suficiente, a conclusão se mantém — comparado fold a fold, 5 de 5”.</li>
+            </ul></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ================================================================ CNN -->
+    <section id="cnn">
+      <div class="section-head">
+        <div class="eyebrow">Rede 2</div>
+        <h2>CNN · Rede convolucional</h2>
+        <p>Cada bloco convolucional é <code>Conv2d → (BatchNorm2d) → ReLU → MaxPool</code>, com 64 filtros no primeiro bloco dobrando a cada bloco, seguido de uma camada densa de 512.</p>
+      </div>
+      <div class="blocks">
+
+        <article class="block" id="cnn-b0">
+          <div class="block-top">
+            <span class="block-no">B0</span>
+            <div class="block-title"><h3>Referência</h3><p class="q">LeNet-5 adaptada do notebook original: 2 blocos (32 e 64 filtros), kernel 3×3, camadas densas 120 e 84.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="table-wrap"><table id="tbl-cnn-b0"></table></div>
+            <div class="reading"><h4>O que concluir</h4><ul>
+              <li>Mesmo pequena (0,5 M parâmetros), a LeNet chega a <b>69,7%</b> no teste: +14,5 p.p. sobre a melhor MLP, que tem o dobro de parâmetros. É o primeiro argumento a favor da estrutura convolucional.</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="cnn-b1">
+          <div class="block-top">
+            <span class="block-no">B1</span>
+            <div class="block-title"><h3>Topologia e extração espacial</h3><p class="q">Quantos blocos, qual janela de convolução, qual padding e como reduzir a resolução: max pooling 2×2 ou convolução com stride 2?</p></div>
+          </div>
+          <div class="block-body">
+            <div class="grid-spec"><span>Blocos<span class="chips"><span class="chip">2</span><span class="chip">3</span><span class="chip">4</span></span></span><span>Kernel<span class="chips"><span class="chip">3</span><span class="chip">5</span></span></span><span>Padding<span class="chips"><span class="chip">same</span><span class="chip">valid</span></span></span><span>Redução<span class="chips"><span class="chip">maxpool</span><span class="chip">stride2</span></span></span><span>= <b>24 combinações, 20 válidas</b></span></div>
+            <div class="panel">
+              <div class="panel-head"><span class="title">Acurácia de validação na triagem</span><span class="sub">mesma escala de cor nos dois painéis · hachurado = combinação descartada (mapa 0×0)</span></div>
+              <div id="hm-cnn-b1"></div>
+            </div>
+            <div class="panel curves" id="curves-cnn_b1">
+              <div class="panel-head"><span class="title">Curvas por época · max pooling × stride 2</span><span class="sub">média dos folds 1–3</span></div>
+              <div class="legend" data-legend="cnn_b1"><span><i class="line-key solid"></i>validação</span><span><i class="line-key dash"></i>treino</span></div>
+              <div class="two-up">
+                <div><p class="chart-sub">Acurácia</p><div class="chart" data-curve="cnn_b1" data-metric="accuracy" data-train="1"></div></div>
+                <div><p class="chart-sub">Loss</p><div class="chart" data-curve="cnn_b1" data-metric="loss" data-train="1"></div></div>
+              </div>
+              <div class="wandb"><b>Mesmo gráfico no W&amp;B:</b> painel de linha · eixo x <code>epoch</code> · eixo y <code>val/accuracy e train/accuracy</code> · agrupar por <em>Group</em> · filtro: <code>cnn_b1_topologia__B4_k3_padsame_maxpool</code>, <code>__B4_k3_padsame_stride2</code>, <code>__B2_k3_padsame_maxpool</code></div>
+            </div>
+            <div class="split">
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>O resultado mais nítido do estudo:</b> max pooling venceu stride 2 em <b>todas</b> as combinações. A pior configuração com pooling (70,6%) supera a melhor com stride (68,5%).</li>
+                <li>Mais profundidade ajudou (2 → 3 → 4 blocos com kernel 3 e padding same).</li>
+                <li>Kernel 3×3 venceu 5×5 mesmo com menos parâmetros. Padding <code>same</code> ficou levemente à frente de <code>valid</code>.</li>
+                <li>4 combinações foram descartadas antes do treino: padding <code>valid</code> com redes profundas ou kernel 5 reduz o mapa a 0×0.</li>
+              </ul></div>
+              <dl class="facts">
+                <div class="fact"><dt>Campeão</dt><dd><span class="mono">4 blocos · k3 · same · maxpool</span></dd></div>
+                <div class="fact"><dt>Validação · 5 folds</dt><dd>76,1% ± 0,8</dd></div>
+                <div class="fact"><dt>Teste</dt><dd>75,5% ± 0,6</dd></div>
+                <div class="fact"><dt>Ganho sobre a LeNet</dt><dd class="delta-up">+5,8 p.p.</dd></div>
+              </dl>
+            </div>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li>Figura principal: <code>outputs_cnn/_relatorio/heatmap_cnn_b1_topologia_conv_blocks_x_kernel_size-padding__val-accuracy_mean.png</code> (painéis maxpool × stride2, escala comum)</li>
+              <li>Custo: <code>…__num_parameters.png</code> ajuda a mostrar que kernel 5 custa mais e rende menos.</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="cnn-b2">
+          <div class="block-top">
+            <span class="block-no">B2</span>
+            <div class="block-title"><h3>Otimização</h3><p class="q">Com a topologia de 4 blocos fixa, qual algoritmo e taxa de aprendizagem convergem melhor?</p></div>
+          </div>
+          <div class="block-body">
+            <div class="split">
+              <div class="panel">
+                <div class="panel-head"><span class="title">Acurácia de validação na triagem</span><span class="sub">escala de cor a partir de 64%</span></div>
+                <div id="hm-cnn-b2"></div>
+              </div>
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>Não houve ganho:</b> o Adam padrão (lr 1e-3) já era adequado. Adam 3e-4 e SGD 1e-2 empataram. É um achado legítimo, não um fracasso.</li>
+                <li>Adam com lr 3e-3 já fica instável; em 1e-2 ou mais colapsa para ~10–22%.</li>
+                <li>SGD com lr ≤ 1e-3 foi cortado pelo limite de 40 épocas.</li>
+              </ul></div>
+            </div>
+            <dl class="facts">
+              <div class="fact"><dt>Campeão</dt><dd><span class="mono">adam · lr 1e-3</span></dd></div>
+              <div class="fact"><dt>Validação · 5 folds</dt><dd>75,8% ± 0,4</dd></div>
+              <div class="fact"><dt>Teste</dt><dd>75,7% ± 0,2</dd></div>
+              <div class="fact"><dt>Ganho sobre o Bloco 1</dt><dd>+0,3 p.p. (ruído)</dd></div>
+            </dl>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li><code>outputs_cnn/_relatorio/heatmap_cnn_b2_otimizacao_optimizer_x_lr__val-accuracy_mean.png</code></li>
+              <li>Mostre lado a lado com o heatmap do Bloco 2 da MLP: o mesmo padrão (Adam colapsa com lr alto, SGD precisa de lr maior).</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="cnn-chk">
+          <div class="block-top">
+            <span class="block-no">CHK</span>
+            <div class="block-title"><h3>Checagem de interação</h3><p class="q">O 2º e o 3º do Bloco 1 (3 blocos com padding same e valid), treinados com o otimizador campeão.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="table-wrap"><table id="tbl-cnn-chk"></table></div>
+            <div class="reading"><h4>O que concluir</h4><ul>
+              <li>As duas ficaram abaixo do campeão de 4 blocos, e o Bloco 3 partiu dele. <b>Atenção:</b> a checagem foi feita <b>sem</b> regularização. O Complementar B mostrou que, com BatchNorm, a rede de 3 blocos passa à frente.</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="cnn-b3">
+          <div class="block-top">
+            <span class="block-no">B3</span>
+            <div class="block-title"><h3>BatchNorm, dropout e pooling</h3><p class="q">Como a janela de pooling, o dropout nas camadas densas e a BatchNorm após cada convolução afetam a generalização? 50 épocas, paciência 7.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="grid-spec"><span>Pooling<span class="chips"><span class="chip">0</span><span class="chip">2</span><span class="chip">3</span></span></span><span>Dropout<span class="chips"><span class="chip">0</span><span class="chip">0,3</span><span class="chip">0,5</span></span></span><span>BatchNorm<span class="chips"><span class="chip">não</span><span class="chip">sim</span></span></span><span>= <b>18 combinações, 6 válidas</b></span></div>
+            <div class="split">
+              <div class="panel">
+                <div class="panel-head"><span class="title">Acurácia de validação na triagem</span><span class="sub">pooling 2×2 (único válido com 4 blocos)</span></div>
+                <div id="hm-cnn-b3"></div>
+              </div>
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>BatchNorm foi o maior ganho da CNN: +3,5 a 4,5 p.p.</b></li>
+                <li>Sem BatchNorm, o dropout não faz diferença. Com BatchNorm, dropout 0,3 e 0,5 empatam no topo, e o 0,5 reduziu o gap de 0,142 para 0,095.</li>
+                <li>O teste ficou ~1 p.p. abaixo da validação: dentro de 1 desvio, e esperado depois de escolher o melhor entre várias opções.</li>
+              </ul></div>
+            </div>
+            <div class="panel curves" id="curves-cnn_b3">
+              <div class="panel-head"><span class="title">Curvas por época · efeito da BatchNorm</span><span class="sub">dropout 0,5 · média dos folds 1–3</span></div>
+              <div class="legend" data-legend="cnn_b3"><span><i class="line-key solid"></i>validação</span><span><i class="line-key dash"></i>treino</span></div>
+              <div class="two-up">
+                <div><p class="chart-sub">Acurácia</p><div class="chart" data-curve="cnn_b3" data-metric="accuracy" data-train="1"></div></div>
+                <div><p class="chart-sub">Loss</p><div class="chart" data-curve="cnn_b3" data-metric="loss" data-train="1"></div></div>
+              </div>
+              <div class="wandb"><b>Mesmo gráfico no W&amp;B:</b> painel de linha · eixo x <code>epoch</code> · eixo y <code>val/accuracy e train/accuracy</code> · agrupar por <em>Group</em> · filtro: <code>cnn_b3_regularizacao__pool2_do0.5_bn0</code>, <code>__pool2_do0.5_bn1</code></div>
+            </div>
+            <dl class="facts">
+              <div class="fact"><dt>Campeão</dt><dd><span class="mono">BN · dropout 0,5 · pool 2</span></dd></div>
+              <div class="fact"><dt>Validação · 5 folds</dt><dd>79,2% ± 1,3</dd></div>
+              <div class="fact"><dt>Teste</dt><dd>78,3% ± 1,1</dd></div>
+              <div class="fact"><dt>Ganho sobre o Bloco 2</dt><dd class="delta-up">+2,6 p.p.</dd></div>
+            </dl>
+            <div class="caveats"><h4>Ressalva</h4><ul>
+              <li><b>A pergunta sobre a janela de pooling ficou sem resposta neste bloco:</b> com 4 blocos, pooling 3×3 reduz o mapa a 0×0, e “sem pooling” gera 270 milhões de parâmetros. Por isso foi criado o Complementar B.</li>
+            </ul></div>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li><code>outputs_cnn/_relatorio/heatmap_cnn_b3_regularizacao_cnn_dropout_x_cnn_batch_norm__val-accuracy_mean.png</code> e <code>…__gap-accuracy_mean.png</code></li>
+              <li>Curvas: <code>curvas_cnn_b3_regularizacao__pool2_do0.5_bn1+…png</code></li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="cnn-b">
+          <div class="block-top">
+            <span class="block-no">+B</span>
+            <div class="block-title"><h3>Complementar B · Janela de pooling</h3><p class="q">Blocos × janela de pooling com a receita campeã (kernel 3, same, BatchNorm, dropout 0,5, Adam 1e-3). A combinação 4 blocos + pooling 2×2 repete o campeão anterior.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="split">
+              <div class="panel">
+                <div class="panel-head"><span class="title">Acurácia de validação · 5 folds</span><span class="sub">hachurado = mapa 0×0 · contorno = novo campeão</span></div>
+                <div id="hm-cnn-b"></div>
+              </div>
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>Novo campeão da CNN:</b> 3 blocos com pooling 2×2 venceu a de 4 blocos em 4 de 5 folds (+1,0 p.p. na validação) e chegou a <b>79,5%</b> no teste.</li>
+                <li>É a <b>interação entre blocos</b> na prática: sem regularização o 4º bloco ajudava; com BatchNorm, a rede de 3 blocos treina por mais tempo de forma produtiva (melhor época 12 contra 6).</li>
+                <li><b>O que importa é o tamanho final do mapa:</b> reduzir de menos (8×8) gera uma camada densa enorme e mais overfitting; reduzir demais (1×1) perde informação. O ponto ideal foi um mapa de 3–4 px alcançado gradualmente.</li>
+              </ul></div>
+            </div>
+            <div class="panel curves" id="curves-cnn_b">
+              <div class="panel-head"><span class="title">Curvas por época · profundidade com BatchNorm</span><span class="sub">média dos 5 folds</span></div>
+              <div class="legend" data-legend="cnn_b"><span><i class="line-key solid"></i>validação</span><span><i class="line-key dash"></i>treino</span></div>
+              <div class="two-up">
+                <div><p class="chart-sub">Acurácia</p><div class="chart" data-curve="cnn_b" data-metric="accuracy" data-train="1"></div></div>
+                <div><p class="chart-sub">Loss</p><div class="chart" data-curve="cnn_b" data-metric="loss" data-train="1"></div></div>
+              </div>
+              <div class="wandb"><b>Mesmo gráfico no W&amp;B:</b> painel de linha · eixo x <code>epoch</code> · eixo y <code>val/accuracy e train/accuracy</code> · agrupar por <em>Group</em> · filtro: <code>cnn_b3b_pooling__B2_pool2</code>, <code>__B3_pool2</code>, <code>__B4_pool2</code></div>
+            </div>
+            <div class="table-wrap"><table id="tbl-cnn-b"></table></div>
+            <div class="callout">
+              <span class="tag">Reprodutibilidade</span>
+              <span>A repetição do campeão anterior deu 78,7% de validação, contra 79,2% originais (−0,5 p.p., com as mesmas melhores épocas). Mesmo com seed fixa, operações da GPU (cuDNN) não são determinísticas: há um ruído de ~±0,5 p.p. entre execuções idênticas. Diferenças menores que ~1 p.p. só contam se repetirem fold a fold.</span>
+            </div>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li><code>outputs_final/_relatorio/heatmap_cnn_b3b_pooling_conv_blocks_x_pool_size__val-accuracy_mean.png</code> + <code>…__num_parameters.png</code></li>
+              <li>Prova do novo campeão: <code>outputs_final/_relatorio/pareado_cnn_b3b_pooling__B4_pool2__val-accuracy.png</code> (pontos por fold)</li>
+            </ul></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ================================================================ COMPARAÇÃO -->
+    <section id="comparacao">
+      <div class="section-head">
+        <h2>MLP × CNN por classe</h2>
+        <p>Recall no teste (média dos 5 folds) dos dois campeões finais. A CNN supera a MLP em todas as classes, com os maiores ganhos nas classes de animais.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head">
+          <span class="title">Recall por classe no teste</span>
+          <div class="legend"><span><i class="key mlp"></i>MLP 4×256 (55,2%)</span><span><i class="key cnn"></i>CNN 3 blocos (79,5%)</span></div>
+        </div>
+        <div class="chart" id="chart-classes"></div>
+      </div>
+      <div class="two-up" style="margin-top:16px">
+        <div class="panel">
+          <div class="panel-head"><span class="title">Maiores confusões · MLP</span><span class="sub">real → previsto · melhor fold</span></div>
+          <div class="table-wrap"><table id="tbl-conf-mlp"></table></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="title">Maiores confusões · CNN</span><span class="sub">real → previsto · melhor fold</span></div>
+          <div class="table-wrap"><table id="tbl-conf-cnn"></table></div>
+        </div>
+      </div>
+      <div class="prose" style="margin-top:16px">
+        <p>Na MLP, confusões como <b>avião → navio</b> e <b>caminhão ↔ automóvel</b> indicam decisão guiada por <b>cor e fundo</b> (céu e mar azuis). Na CNN, esses erros saem do topo e o que sobra se concentra entre <b>animais parecidos</b> (cachorro ↔ gato, pássaro → cervo): a rede passou a olhar forma e textura. É um bom fechamento para o slide de comparação.</p>
+      </div>
+    </section>
+
+    <!-- ================================================================ BÔNUS -->
+    <section id="bonus">
+      <div class="section-head">
+        <div class="eyebrow">Bônus</div>
+        <h2>Data augmentation</h2>
+        <p>Pré-processamento, não hiperparâmetro da rede: por isso fica fora da sequência principal de blocos. <b>RandomCrop 32 com padding 4</b> (desloca a imagem até 4 pixels) e <b>flip horizontal</b> (p = 0,5), aplicados só no treino e direto na GPU; validação e teste usam as imagens originais. Cada rede partiu do seu campeão, com a mesma receita <b>sem</b> augmentation re-treinada no mesmo bloco como referência pareada.</p>
+      </div>
+      <div class="blocks">
+
+        <article class="block" id="bonus-cnn">
+          <div class="block-top">
+            <span class="block-no">+AUG</span>
+            <div class="block-title"><h3>CNN · Augmentation × profundidade × dropout</h3><p class="q">Quanto a diversidade extra de imagens acrescenta à CNN campeã? Com mais dados efetivos, a rede de 4 blocos volta a compensar? O dropout ainda é necessário? 100 épocas, paciência 10.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="grid-spec"><span>Augmentation<span class="chips"><span class="chip">não</span><span class="chip">sim</span></span></span><span>Blocos<span class="chips"><span class="chip">3</span><span class="chip">4</span></span></span><span>Dropout<span class="chips"><span class="chip">0,3</span><span class="chip">0,5</span></span></span><span>= <b>8 configurações</b></span></div>
+            <div class="panel">
+              <div class="panel-head"><span class="title">Acurácia de validação</span><span class="sub">mesma escala de cor nos dois painéis · contorno = campeão</span></div>
+              <div id="hm-aug-cnn"></div>
+            </div>
+            <div class="split">
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>O maior salto de todo o estudo: +7,9 p.p. na validação</b> sobre a mesma receita sem augmentation, vencendo em <b>5 de 5 folds</b>; no teste, +7,4 p.p. (5 de 5).</li>
+                <li><b>A rede de 4 blocos voltou a vencer</b> (+0,8 p.p. sobre 3 blocos, em 3 de 3 folds). Sem augmentation, 3 e 4 blocos empatam. Com mais diversidade de dados, a capacidade extra deixa de virar overfitting: é a interação entre blocos no sentido inverso.</li>
+                <li>O gap treino–validação caiu de 0,105 para 0,069, e a melhor época passou de ~10 para ~31: o modelo aprende por mais tempo sem decorar.</li>
+                <li>O dropout <b>continuou útil</b>: 0,5 ≥ 0,3 com augmentation. A hipótese de que augmentation dispensaria o dropout não se confirmou.</li>
+              </ul></div>
+              <dl class="facts">
+                <div class="fact"><dt>Campeão com augmentation</dt><dd><span class="mono">4 blocos · dropout 0,5</span></dd></div>
+                <div class="fact"><dt>Validação · 5 folds</dt><dd>87,2% ± 0,5</dd></div>
+                <div class="fact"><dt>Teste</dt><dd>86,4% ± 0,6</dd></div>
+                <div class="fact"><dt>Ganho pareado (teste)</dt><dd class="delta-up">+7,4 p.p. · 5/5</dd></div>
+              </dl>
+            </div>
+            <div class="table-wrap"><table id="tbl-aug-cnn"></table></div>
+            <div class="panel curves" id="curves-cnn_aug">
+              <div class="panel-head"><span class="title">Curvas por época · augmentation retarda o overfitting</span><span class="sub">média dos folds 1–3</span></div>
+              <div class="legend" data-legend="cnn_aug"><span><i class="line-key solid"></i>validação</span><span><i class="line-key dash"></i>treino</span></div>
+              <div class="two-up">
+                <div><p class="chart-sub">Acurácia</p><div class="chart" data-curve="cnn_aug" data-metric="accuracy" data-train="1"></div></div>
+                <div><p class="chart-sub">Loss</p><div class="chart" data-curve="cnn_aug" data-metric="loss" data-train="1"></div></div>
+              </div>
+              <div class="wandb"><b>Mesmo gráfico no W&amp;B:</b> painel de linha · eixo x <code>epoch</code> · eixo y <code>val/accuracy e train/accuracy</code> · agrupar por <em>Group</em> · filtro: <code>cnn_b4_augmentation__aug0_B3_do0.5</code>, <code>__aug1_B3_do0.5</code>, <code>__aug1_B4_do0.5</code></div>
+            </div>
+            <div class="caveats"><h4>Ressalvas</h4><ul>
+              <li>A receita sem augmentation, re-treinada com 100 épocas e paciência 10, deu 79,4% de validação contra 79,8% no Complementar B: diferença de −0,4 p.p., dentro do ruído entre execuções.</li>
+              <li>Nenhuma configuração com augmentation chegou perto do limite de 100 épocas (melhores épocas entre 18 e 53): o resultado não está limitado pelo orçamento.</li>
+            </ul></div>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li><code>outputs_augmentation/_relatorio/heatmap_cnn_b4_augmentation_conv_blocks_x_cnn_dropout__val-accuracy_mean.png</code> (painéis sem/com augmentation)</li>
+              <li>Prova do ganho: <code>outputs_augmentation/_relatorio/pareado_cnn_b4_augmentation__aug0_B3_do0.5__val-accuracy.png</code> e as curvas por época acima.</li>
+            </ul></div>
+          </div>
+        </article>
+
+        <article class="block" id="bonus-mlp">
+          <div class="block-top">
+            <span class="block-no">+AUG</span>
+            <div class="block-title"><h3>MLP · Augmentation × dropout</h3><p class="q">Deslocamentos e espelhamentos ajudam uma rede que não tem noção de vizinhança entre pixels? 150 épocas, paciência 15.</p></div>
+          </div>
+          <div class="block-body">
+            <div class="grid-spec"><span>Augmentation<span class="chips"><span class="chip">não</span><span class="chip">sim</span></span></span><span>Dropout<span class="chips"><span class="chip">0</span><span class="chip">0,2</span></span></span><span>= <b>4 configurações · 5 folds</b></span></div>
+            <div class="split">
+              <div class="panel">
+                <div class="panel-head"><span class="title">Acurácia de validação · 5 folds</span><span class="sub">contorno = campeão</span></div>
+                <div id="hm-aug-mlp"></div>
+              </div>
+              <div class="reading"><h4>O que concluir</h4><ul>
+                <li><b>Ganho real, mas pequeno: +2,9 p.p. na validação</b> (5 de 5 folds) e +2,7 p.p. no teste, contra +7,4 p.p. da CNN.</li>
+                <li><b>Convergência ~9× mais lenta:</b> a melhor época passou de ~15 para ~141. Para a MLP, cada imagem deslocada é uma entrada nova, e ela precisa “ver” cada posição separadamente.</li>
+                <li>O gap caiu de 0,148 para 0,052, e dropout 0,2 continuou ajudando (+2,0 p.p. sobre augmentation sem dropout).</li>
+                <li>Por classe, o ganho é irregular: caminhão, cavalo e gato melhoram ~8 p.p., mas pássaro e cervo pioram ~3 p.p.</li>
+              </ul></div>
+            </div>
+            <dl class="facts">
+              <div class="fact"><dt>Campeão com augmentation</dt><dd><span class="mono">4 × 256 · dropout 0,2</span></dd></div>
+              <div class="fact"><dt>Validação · 5 folds</dt><dd>57,9% ± 0,3</dd></div>
+              <div class="fact"><dt>Teste</dt><dd>57,8% ± 0,2</dd></div>
+              <div class="fact"><dt>Ganho pareado (teste)</dt><dd class="delta-up">+2,7 p.p. · 5/5</dd></div>
+            </dl>
+            <div class="table-wrap"><table id="tbl-aug-mlp"></table></div>
+            <div class="panel curves" id="curves-mlp_aug">
+              <div class="panel-head"><span class="title">Curvas por época · a MLP precisa de muito mais épocas</span><span class="sub">média dos 5 folds</span></div>
+              <div class="legend" data-legend="mlp_aug"><span><i class="line-key solid"></i>validação</span><span><i class="line-key dash"></i>treino</span></div>
+              <div class="two-up">
+                <div><p class="chart-sub">Acurácia</p><div class="chart" data-curve="mlp_aug" data-metric="accuracy" data-train="1"></div></div>
+                <div><p class="chart-sub">Loss</p><div class="chart" data-curve="mlp_aug" data-metric="loss" data-train="1"></div></div>
+              </div>
+              <div class="wandb"><b>Mesmo gráfico no W&amp;B:</b> painel de linha · eixo x <code>epoch</code> · eixo y <code>val/accuracy e train/accuracy</code> · agrupar por <em>Group</em> · filtro: <code>mlp_b4_augmentation__aug0_do0.2</code>, <code>__aug1_do0</code>, <code>__aug1_do0.2</code></div>
+            </div>
+            <div class="caveats"><h4>Ressalva importante</h4><ul>
+              <li><b>O campeão com augmentation foi limitado pelo orçamento:</b> a melhor época ficou entre 127 e 148 num limite de 150, ainda subindo. 57,8% é um <b>piso</b>; com mais épocas o ganho provavelmente seria um pouco maior. Diga isso no slide.</li>
+              <li>A receita sem augmentation reproduziu exatamente o resultado anterior (55,0% de validação, mesmas melhores épocas).</li>
+            </ul></div>
+            <div class="slides"><h4>Para os slides</h4><ul>
+              <li><code>outputs_augmentation/_relatorio/heatmap_mlp_b4_augmentation_dropout_x_augment__melhor_epoca_media.png</code> mostra o custo em épocas.</li>
+              <li>Mensagem: “o mesmo pré-processamento vale +7,4 p.p. na CNN e +2,7 p.p. na MLP — a diferença é a estrutura espacial”.</li>
+            </ul></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ================================================================ LIÇÕES -->
+    <section id="licoes">
+      <div class="section-head">
+        <h2>Lições metodológicas</h2>
+        <p>Pontos que mostram rigor ao professor. Cada um tem evidência concreta nos dados.</p>
+      </div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Lição</th><th>Evidência</th><th>Como dizer no slide</th></tr></thead>
+        <tbody>
+          <tr><td><b>Escolher pela validação, nunca pelo teste</b></td><td>Validação e teste dos campeões finais concordam: MLP 55,0% × 55,2%; CNN 79,8% × 79,5%.</td><td>“O teste foi usado uma única vez, só nos campeões.”</td></tr>
+          <tr><td><b>Maldição do vencedor</b></td><td>1º da triagem do Bloco 1 da MLP: 53,1% em 3 folds → 52,7% em 5.</td><td>“O melhor entre muitos é otimista; por isso as finalistas completam os 5 folds.”</td></tr>
+          <tr><td><b>Interação entre blocos</b></td><td>CNN: 4 blocos venciam sem regularização; com BatchNorm, 3 blocos vence em 4 de 5 folds.</td><td>“A busca em blocos é eficiente, mas precisa de checagens.”</td></tr>
+          <tr><td><b>Orçamento de épocas</b></td><td>SGD com lr baixo e dropout 0,5 esbarraram no limite; com 100 épocas, o dropout 0,5 continuou pior (0 de 5 folds). A MLP com augmentation também esbarrou (época ~141 de 150).</td><td>“Verificamos se os perdedores só precisavam de mais tempo.”</td></tr>
+          <tr><td><b>Ruído entre execuções</b></td><td>Mesma configuração repetida: −0,5 p.p. de diferença.</td><td>“Diferenças abaixo de ~1 p.p. só valem se repetirem fold a fold.”</td></tr>
+          <tr><td><b>Dados × arquitetura</b></td><td>Augmentation rendeu +7,4 p.p. à CNN (maior salto do estudo) e +2,7 p.p. à MLP.</td><td>“O mesmo pré-processamento só é bem aproveitado por quem enxerga estrutura espacial.”</td></tr>
+          <tr><td><b>Comparação pareada</b></td><td>Entropia cruzada × MSE: +0,34 p.p., mas em 5 de 5 folds.</td><td>“Mesmas partições permitem comparar fold a fold.”</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ================================================================ ROTEIRO -->
+    <section id="roteiro">
+      <div class="section-head">
+        <h2>Roteiro de slides</h2>
+        <p>Proposta de sequência. As figuras citadas já existem nas pastas <code>_relatorio/</code>; os números estão nas fichas acima.</p>
+      </div>
+      <div class="table-wrap"><table class="outline">
+        <thead><tr><th>#</th><th>Slide</th><th>Conteúdo</th><th>Figura</th></tr></thead>
+        <tbody id="outline-body"></tbody>
+      </table></div>
+    </section>
+
+    <!-- ================================================================ ARQUIVOS -->
+    <section id="arquivos">
+      <div class="section-head">
+        <h2>Onde está cada coisa</h2>
+      </div>
+      <div class="files">
+        <div><b>W&amp;B</b><span><a href="https://wandb.ai/models-universidade-federal-de-pernambuco/cifar10-rn" target="_blank" rel="noopener">wandb.ai/models-universidade-federal-de-pernambuco/cifar10-rn</a> · uma run por fold (nome <code>{experimento}-foldK</code>), agrupadas pelo nome do experimento. Para ver médias entre folds, agrupe por <em>Group</em>.</span></div>
+        <div><b>Resultados locais</b><span><code>outputs_mlp/</code>, <code>outputs_cnn/</code>, <code>outputs_final/</code> (complementares) e <code>outputs_augmentation/</code> (bônus), no repositório <code>~/rn</code>. Cada experimento tem sua pasta com <code>historico_treino.csv</code>, <code>parametros.json</code> e <code>resultados.json</code>.</span></div>
+        <div><b>Figuras prontas</b><span><code>outputs_*/_relatorio/*.png</code>: heatmaps, curvas, barras e comparações por classe, geradas a partir dos CSV.</span></div>
+        <div><b>Rankings e campeões</b><span><code>outputs_*/_grids/{bloco}/</code>: <code>ranking_triagem.csv</code>, <code>ranking_final.csv</code>, <code>campeao.json</code>.</span></div>
+        <div><b>Notebooks</b><span><code>Kaggle_MLP.ipynb</code> e <code>Kaggle_CNN.ipynb</code>: cada um executa o estudo completo da rede (blocos, complementar e bônus) em uma única execução — ~1h–1h30 (MLP) e ~3h–3h30 (CNN) com 2× T4.</span></div>
+        <div><b>Código</b><span><a href="https://github.com/diegoflyra/dfal-neural-networks" target="_blank" rel="noopener">github.com/diegoflyra/dfal-neural-networks</a> (privado): <code>src/</code>, <code>grids/</code> e <code>tests/</code>.</span></div>
+      </div>
+    </section>
+
+    <footer>Números extraídos dos arquivos de resultados (idênticos às métricas registradas no W&amp;B). Percentuais com vírgula; “p.p.” = pontos percentuais; “±” = desvio padrão entre folds.</footer>
+  </main>
+</div>
+<div id="tip" hidden></div>
+
+<script id="data" type="application/json">__DATA__</script>
+<script id="curves" type="application/json">__CURVES__</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById("data").textContent);
+  const PT = { airplane: "avião", automobile: "automóvel", bird: "pássaro", cat: "gato", deer: "cervo", dog: "cachorro", frog: "sapo", horse: "cavalo", ship: "navio", truck: "caminhão" };
+  const pct = (x, d = 1) => x == null ? "—" : (x * 100).toFixed(d).replace(".", ",") + "%";
+  const pp = (x, d = 1) => (x >= 0 ? "+" : "−") + Math.abs(x * 100).toFixed(d).replace(".", ",") + " p.p.";
+  const num = (x, d = 1) => x == null ? "—" : Number(x).toFixed(d).replace(".", ",");
+  const sd = (x) => x == null ? "" : "± " + (x * 100).toFixed(1).replace(".", ",");
+  const params = (n) => n >= 1e6 ? num(n / 1e6, 2) + " M" : num(n / 1e3, 0) + " mil";
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const NS = "http://www.w3.org/2000/svg";
+  const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+
+  /* ---------- tooltip ---------- */
+  const tip = document.getElementById("tip");
+  function showTip(target, evt) {
+    tip.innerHTML = target.getAttribute("data-tip"); tip.hidden = false;
+    const r = target.getBoundingClientRect();
+    const x = evt && evt.clientX ? evt.clientX : r.left + r.width / 2;
+    const y = evt && evt.clientY ? evt.clientY : r.top;
+    const w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.min(window.innerWidth - w - 8, Math.max(8, x + 14)) + "px";
+    tip.style.top = Math.max(8, y - h - 12) + "px";
+  }
+  document.addEventListener("mousemove", (e) => { const t = e.target.closest("[data-tip]"); if (t) showTip(t, e); else tip.hidden = true; });
+  document.addEventListener("focusin", (e) => { const t = e.target.closest("[data-tip]"); if (t) showTip(t); });
+  document.addEventListener("focusout", () => { tip.hidden = true; });
+
+  /* ---------- gráfico de evolução (pontos com desvio) ---------- */
+  function progression(id, stages, colorVar) {
+    const root = document.getElementById(id);
+    const W = 560, rowH = 38, top = 8, left = 196, right = 64, bottom = 30;
+    const H = top + stages.length * rowH + bottom;
+    const lo = 0.35, hi = 0.9;
+    const x = (v) => left + (v - lo) / (hi - lo) * (W - left - right);
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Acurácia no teste por etapa" }, root);
+    for (let t = 0.4; t <= 0.8001; t += 0.1) {
+      el("line", { x1: x(t), x2: x(t), y1: top, y2: H - bottom, class: "grid-line" }, svg);
+      const tx = el("text", { x: x(t), y: H - 10, "text-anchor": "middle", class: "axis-text" }, svg); tx.textContent = Math.round(t * 100) + "%";
+    }
+    stages.forEach((s, i) => {
+      const cy = top + i * rowH + rowH / 2;
+      const lab = el("text", { x: 0, y: cy - 2, class: "label-text", "dominant-baseline": "middle" }, svg); lab.textContent = s.label;
+      const sub = el("text", { x: 0, y: cy + 13, class: "axis-text", "dominant-baseline": "middle" }, svg); sub.textContent = s.sub;
+      el("line", { x1: x(s.v - s.sd), x2: x(s.v + s.sd), y1: cy, y2: cy, stroke: `var(${colorVar})`, "stroke-width": 2, "stroke-linecap": "round" }, svg);
+      const g = el("g", { tabindex: 0, "data-tip": `<b>${esc(s.label)}</b><br>${esc(s.sub)}<br>Teste: ${pct(s.v)} ${sd(s.sd)}${s.delta != null ? "<br>Ganho sobre a etapa anterior: " + pp(s.delta) : ""}` }, svg);
+      el("circle", { cx: x(s.v), cy, r: 11, fill: "transparent" }, g);
+      if (s.bonus) { el("line", { x1: 0, x2: W, y1: cy - rowH / 2, y2: cy - rowH / 2, class: "grid-line" }, svg); }
+      el("circle", { cx: x(s.v), cy, r: 5.5, fill: s.bonus ? "var(--surface)" : `var(${colorVar})`, stroke: s.bonus ? `var(${colorVar})` : "var(--surface)", "stroke-width": 2 }, g);
+      const val = el("text", { x: x(s.v + s.sd) + 8, y: cy, class: "value-text", "dominant-baseline": "middle" }, svg); val.textContent = pct(s.v);
+    });
+  }
+  const M = D.mlp, C = D.cnn;
+  const mlpStages = [
+    { label: "Linear (B0)", sub: "regressão logística", s: M.stages[0] },
+    { label: "MLP original (B0)", sub: "64-128-64", s: M.stages[1] },
+    { label: "Topologia (B1)", sub: "3 × 256", s: M.stages[2] },
+    { label: "Otimização (B2)", sub: "+ Adam lr 3e-4", s: M.stages[3] },
+    { label: "Checagem", sub: "4 × 256", s: M.stages[4] },
+    { label: "Regularização (B3)", sub: "+ dropout 0,2", s: M.stages[5] },
+    { label: "Bônus: augmentation", sub: "crop + flip, 150 épocas", s: D.aug.mlp.rows.find((r) => r.exp === D.aug.mlp.champ), bonus: true },
+  ];
+  const cnnStages = [
+    { label: "LeNet original (B0)", sub: "2 blocos, 32/64 filtros", s: C.stages[0] },
+    { label: "Topologia (B1)", sub: "4 blocos, k3, maxpool", s: C.stages[1] },
+    { label: "Otimização (B2)", sub: "Adam lr 1e-3 (mantido)", s: C.stages[2] },
+    { label: "Regularização (B3)", sub: "+ BatchNorm, dropout 0,5", s: C.stages[3] },
+    { label: "Pooling (+B)", sub: "3 blocos, pooling 2×2", s: C.stages[4] },
+    { label: "Bônus: augmentation", sub: "crop + flip, 4 blocos", s: D.aug.cnn.rows.find((r) => r.exp === D.aug.cnn.champ), bonus: true },
+  ];
+  const withDelta = (arr, startDelta) => arr.map((o, i) => ({ label: o.label, sub: o.sub, bonus: !!o.bonus, v: o.s.test, sd: o.s.test_std, delta: i >= startDelta ? o.s.test - arr[i - 1].s.test : null }));
+  progression("chart-prog-mlp", withDelta(mlpStages, 2), "--mlp");
+  progression("chart-prog-cnn", withDelta(cnnStages, 1), "--cnn");
+
+  /* ---------- heatmap ---------- */
+  function heatmap(container, { rows, cols, cell, domain, rowTitle, colTitle, colFmt = (c) => c, rowFmt = (r) => r }) {
+    const wrap = document.createElement("div"); wrap.className = "hm-wrap";
+    const grid = document.createElement("div"); grid.className = "hm";
+    grid.style.gridTemplateColumns = `auto repeat(${cols.length}, minmax(58px, 1fr))`;
+    grid.appendChild(Object.assign(document.createElement("div"), { className: "h", textContent: "" }));
+    cols.forEach((c) => grid.appendChild(Object.assign(document.createElement("div"), { className: "h", textContent: colFmt(c) })));
+    rows.forEach((r) => {
+      grid.appendChild(Object.assign(document.createElement("div"), { className: "r", textContent: rowFmt(r) }));
+      cols.forEach((c) => {
+        const d = cell(r, c); const div = document.createElement("div");
+        if (!d) { div.className = "c void"; div.textContent = "—"; div.tabIndex = 0; div.setAttribute("data-tip", "Combinação descartada antes do treino"); }
+        else {
+          const t = Math.max(0, Math.min(1, (d.v - domain[0]) / (domain[1] - domain[0])));
+          const k = Math.min(6, Math.floor(t * 7));
+          div.className = "c" + (d.champ ? " champ" : "");
+          div.style.background = `var(--seq-${k})`; div.style.color = `var(--seq-ink-${k})`;
+          div.textContent = pct(d.v); div.tabIndex = 0; div.setAttribute("data-tip", d.tip);
+        }
+        grid.appendChild(div);
+      });
+    });
+    wrap.appendChild(grid); container.appendChild(wrap);
+    return grid;
+  }
+  function scale(container, domain, note) {
+    const s = document.createElement("div"); s.className = "hm-scale";
+    s.innerHTML = `<span>${pct(domain[0], 0)}</span><span class="ramp">${[0,1,2,3,4,5,6].map((k) => `<i style="background:var(--seq-${k})"></i>`).join("")}</span><span>${pct(domain[1], 0)}</span><span>${note || ""}</span>`;
+    container.appendChild(s);
+  }
+  const tipRow = (r, extra = "") => `<b>${esc(r.label)}</b><br>Validação: ${pct(r["val/accuracy_mean"])} ${sd(r["val/accuracy_std"])} (${r.folds} folds)<br>Gap treino–val: ${num(r["gap/accuracy_mean"], 3)} · melhor época ${num(r.melhor_epoca_media, 1)}<br>Parâmetros: ${params(r.num_parameters)}${extra}`;
+  const find = (rows, pred) => rows.find(pred);
+
+  // MLP B1
+  (() => {
+    const c = document.getElementById("hm-mlp-b1");
+    heatmap(c, { rows: [1, 2, 3, 4, 5], cols: [128, 256, 512, 1024, 2048], domain: [0.495, 0.535],
+      cell: (r, col) => { const x = find(M.b1_triagem, (o) => o.mlp_layers === r && o.mlp_neurons === col); return x && { v: x["val/accuracy_mean"], tip: tipRow(x), champ: x.label === "L3_N256" }; },
+      rowFmt: (r) => r + (r === 1 ? " camada" : " camadas"), colFmt: (c) => c + " n" });
+    scale(c, [0.495, 0.535], "· contorno = campeão");
+  })();
+  // MLP B2
+  (() => {
+    const c = document.getElementById("hm-mlp-b2");
+    const lrs = [0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1];
+    heatmap(c, { rows: ["adam", "sgd"], cols: lrs, domain: [0.42, 0.54],
+      cell: (r, lr) => { const x = find(M.b2_triagem, (o) => o.optimizer === r && Math.abs(o.lr - lr) < 1e-12); return x && { v: x["val/accuracy_mean"], tip: tipRow(x), champ: r === "adam" && lr === 0.0003 }; },
+      colFmt: (lr) => String(lr).replace("0.", "0,") });
+    scale(c, [0.42, 0.54], "· abaixo de 42% = cor mais clara (10% = colapso)");
+  })();
+  // MLP B3
+  (() => {
+    const c = document.getElementById("hm-mlp-b3");
+    heatmap(c, { rows: [0, 0.2, 0.3, 0.5], cols: ["cross_entropy", "mse"], domain: [0.525, 0.555],
+      cell: (r, lf) => { const x = find(M.b3_triagem, (o) => Math.abs(o.dropout - r) < 1e-9 && o.loss_fn === lf); return x && { v: x["val/accuracy_mean"], tip: tipRow(x), champ: r === 0.2 && lf === "cross_entropy" }; },
+      rowFmt: (r) => "dropout " + String(r).replace(".", ","), colFmt: (c) => c === "mse" ? "MSE" : "entropia cruzada" });
+    scale(c, [0.525, 0.555], "· contorno = campeão final da MLP");
+  })();
+  // CNN B1 (facetas)
+  (() => {
+    const c = document.getElementById("hm-cnn-b1");
+    const facets = document.createElement("div"); facets.className = "hm-facets"; c.appendChild(facets);
+    const dom = [0.65, 0.765];
+    [["maxpool", "Max pooling 2×2 (stride 1)"], ["stride2", "Convolução com stride 2 (sem pooling)"]].forEach(([red, title]) => {
+      const f = document.createElement("div"); f.innerHTML = `<div class="hm-facet-title">${title}</div>`; facets.appendChild(f);
+      const cols = [[3, "same"], [3, "valid"], [5, "same"], [5, "valid"]];
+      heatmap(f, { rows: [2, 3, 4], cols, domain: dom,
+        cell: (b, [k, p]) => { const x = find(C.b1_triagem, (o) => o.conv_blocks === b && o.kernel_size === k && o.padding === p && o.reducao === red); return x && { v: x["val/accuracy_mean"], tip: tipRow(x), champ: x.label === "B4_k3_padsame_maxpool" }; },
+        rowFmt: (b) => b + " blocos", colFmt: ([k, p]) => `k${k} · ${p}` });
+    });
+    scale(c, dom, "· contorno = campeão");
+  })();
+  // CNN B2
+  (() => {
+    const c = document.getElementById("hm-cnn-b2");
+    const lrs = [0.0001, 0.0003, 0.001, 0.003, 0.01, 0.03, 0.1];
+    heatmap(c, { rows: ["adam", "sgd"], cols: lrs, domain: [0.64, 0.76],
+      cell: (r, lr) => { const x = find(C.b2_triagem, (o) => o.optimizer === r && Math.abs(o.lr - lr) < 1e-12); return x && { v: x["val/accuracy_mean"], tip: tipRow(x), champ: r === "adam" && lr === 0.001 }; },
+      colFmt: (lr) => String(lr).replace("0.", "0,") });
+    scale(c, [0.64, 0.76], "· abaixo de 64% = cor mais clara");
+  })();
+  // CNN B3
+  (() => {
+    const c = document.getElementById("hm-cnn-b3");
+    heatmap(c, { rows: [0, 0.3, 0.5], cols: [false, true], domain: [0.745, 0.8],
+      cell: (r, bn) => { const x = find(C.b3_triagem, (o) => Math.abs(o.cnn_dropout - r) < 1e-9 && o.cnn_batch_norm === bn && o.pool_size === 2); return x && { v: x["val/accuracy_mean"], tip: tipRow(x), champ: r === 0.5 && bn }; },
+      rowFmt: (r) => "dropout " + String(r).replace(".", ","), colFmt: (bn) => bn ? "com BatchNorm" : "sem BatchNorm" });
+    scale(c, [0.745, 0.8], "· contorno = campeão do bloco");
+  })();
+  // CNN complementar B
+  (() => {
+    const c = document.getElementById("hm-cnn-b");
+    heatmap(c, { rows: [2, 3, 4], cols: [2, 3, 4], domain: [0.745, 0.8],
+      cell: (b, p) => { const x = find(C.extraB, (o) => o.label === `B${b}_pool${p}`); return x && { v: x["val/accuracy_mean"], tip: tipRow(x), champ: x.label === "B3_pool2" }; },
+      rowFmt: (b) => b + " blocos", colFmt: (p) => `pool ${p}×${p}` });
+    scale(c, [0.745, 0.8], "· contorno = novo campeão");
+  })();
+
+  /* ---------- tabelas ---------- */
+  function table(id, head, rows) {
+    const t = document.getElementById(id);
+    t.innerHTML = `<thead><tr>${head.map((h) => `<th class="${h.num ? "num" : ""}">${h.t}</th>`).join("")}</tr></thead><tbody>${rows.map((r) => `<tr class="${r.win ? "win" : ""}">${r.cells.map((c, i) => `<td class="${head[i].num ? "num" : ""}">${c}</td>`).join("")}</tr>`).join("")}</tbody>`;
+  }
+  const byExp = (arr, exp) => arr.find((s) => s.exp === exp);
+  const S = (s) => [pct(s.val) + " " + sd(s.val_std), pct(s.test) + " " + sd(s.test_std), params(s.params)];
+  table("tbl-mlp-b0", [{ t: "Configuração" }, { t: "Validação", num: 1 }, { t: "Teste", num: 1 }, { t: "Parâmetros", num: 1 }], [
+    { cells: ["Regressão logística <span class='mono'>(0 camadas)</span>", ...S(M.stages[0])] },
+    { cells: ["MLP original <span class='mono'>64-128-64</span>", ...S(M.stages[1])], win: 1 },
+  ]);
+  table("tbl-cnn-b0", [{ t: "Configuração" }, { t: "Validação", num: 1 }, { t: "Teste", num: 1 }, { t: "Parâmetros", num: 1 }], [
+    { cells: ["LeNet adaptada <span class='mono'>2 blocos · 120-84</span>", ...S(C.stages[0])], win: 1 },
+  ]);
+  const finalRows = (rows, champLabel, name) => rows.map((r) => ({ win: r.label === champLabel, cells: [name(r), pct(r["val/accuracy_mean"]) + " " + sd(r["val/accuracy_std"]), num(r["gap/accuracy_mean"], 3), num(r.melhor_epoca_media, 1), params(r.num_parameters)] }));
+  const H5 = [{ t: "Configuração · 5 folds" }, { t: "Validação", num: 1 }, { t: "Gap", num: 1 }, { t: "Melhor época", num: 1 }, { t: "Parâmetros", num: 1 }];
+  table("tbl-mlp-chk", H5, [
+    { win: 0, cells: ["Campeão do Bloco 2 · <span class='mono'>3 × 256</span>", pct(M.b2_final[0]["val/accuracy_mean"]) + " " + sd(M.b2_final[0]["val/accuracy_std"]), num(M.b2_final[0]["gap/accuracy_mean"], 3), num(M.b2_final[0].melhor_epoca_media, 1), params(M.b2_final[0].num_parameters)] },
+    ...finalRows(M.chk_final, "rank2_L4_N256", (r) => `${r.label.startsWith("rank2") ? "2º" : "3º"} do Bloco 1 · <span class='mono'>${r.mlp_layers} × ${JSON.parse(r.mlp_neurons)[0]}</span>`),
+  ]);
+  table("tbl-cnn-chk", H5, [
+    { win: 1, cells: ["Campeão do Bloco 2 · <span class='mono'>4 blocos · same</span>", pct(C.b2_final[0]["val/accuracy_mean"]) + " " + sd(C.b2_final[0]["val/accuracy_std"]), num(C.b2_final[0]["gap/accuracy_mean"], 3), num(C.b2_final[0].melhor_epoca_media, 1), params(C.b2_final[0].num_parameters)] },
+    ...finalRows(C.chk_final, "", (r) => `${r.label.startsWith("rank2") ? "2º" : "3º"} do Bloco 1 · <span class='mono'>3 blocos · ${r.padding}</span>`),
+  ]);
+  const pairedA = Object.fromEntries(M.paired_A.map((p) => [p.exp, p]));
+  table("tbl-mlp-a", [{ t: "Configuração" }, { t: "Validação", num: 1 }, { t: "Melhor época", num: 1 }, { t: "vs campeão", num: 1 }],
+    [...M.extraA].sort((a, b) => b["val/accuracy_mean"] - a["val/accuracy_mean"]).map((r) => {
+      const p = pairedA[r.exp_name];
+      return { win: r.label === "do0.2_losscross_entropy", cells: [`<span class='mono'>dropout ${String(r.dropout).replace(".", ",")} · ${r.loss_fn === "mse" ? "MSE" : "entropia cruzada"}</span>`, pct(r["val/accuracy_mean"]) + " " + sd(r["val/accuracy_std"]), num(r.melhor_epoca_media, 1), p ? `${pp(p.delta, 2)} · ${p.wins}/${p.n}` : "referência"] };
+    }));
+  const pairedB = Object.fromEntries(C.paired_B.map((p) => [p.exp, p]));
+  table("tbl-cnn-b", [{ t: "Configuração · 5 folds" }, { t: "Mapa final", num: 1 }, { t: "Parâmetros", num: 1 }, { t: "Validação", num: 1 }, { t: "Teste", num: 1 }, { t: "vs 4 blocos · pool 2", num: 1 }],
+    [...C.extraB_summary].sort((a, b) => b.val - a.val).map((s) => {
+      const lab = s.exp.split("__")[1]; const [b, p] = [Number(lab[1]), Number(lab.slice(-1))];
+      const size = 32; let m = size; for (let i = 0; i < b; i++) m = Math.floor(m / p);
+      const pr = pairedB[s.exp];
+      return { win: lab === "B3_pool2", cells: [`<span class='mono'>${b} blocos · pool ${p}×${p}</span>`, `${m}×${m}`, params(s.params), pct(s.val) + " " + sd(s.val_std), pct(s.test) + " " + sd(s.test_std), pr ? `${pp(pr.delta, 2)} · ${pr.wins}/${pr.n}` : "referência"] };
+    }));
+  const conf = (id, rows) => table(id, [{ t: "Real" }, { t: "Previsto como" }, { t: "Imagens", num: 1 }], rows.map((r) => ({ cells: [PT[r.real], PT[r.pred], String(r.n)] })));
+  conf("tbl-conf-mlp", M.confusions_final);
+  conf("tbl-conf-cnn", C.confusions_final);
+
+
+  /* ---------- bônus: augmentation ---------- */
+  (() => {
+    const AC = D.aug.cnn, AM = D.aug.mlp;
+    const tipAug = (r, ref) => `<b>${esc(r.label)}</b><br>Validação: ${pct(r.val)} ${sd(r.val_std)} (${r.folds} folds)<br>Teste: ${pct(r.test)} ${sd(r.test_std)}<br>Gap treino–val: ${num(r.gap, 3)} · melhor época ${num(r.best_epoch, 1)}`;
+    // CNN: facetas sem/com augmentation
+    const c = document.getElementById("hm-aug-cnn");
+    const facets = document.createElement("div"); facets.className = "hm-facets"; c.appendChild(facets);
+    const dom = [0.78, 0.875];
+    [[false, "Sem augmentation"], [true, "Com augmentation"]].forEach(([aug, title]) => {
+      const f = document.createElement("div"); f.innerHTML = `<div class="hm-facet-title">${title}</div>`; facets.appendChild(f);
+      heatmap(f, { rows: [3, 4], cols: [0.3, 0.5], domain: dom,
+        cell: (b, d) => { const r = AC.rows.find((o) => o.augment === aug && o.conv_blocks === b && Math.abs(o.dropout - d) < 1e-9); return r && { v: r.val, tip: tipAug(r), champ: r.exp === AC.champ }; },
+        rowFmt: (b) => b + " blocos", colFmt: (d) => "dropout " + String(d).replace(".", ",") });
+    });
+    scale(c, dom, "· contorno = campeão");
+    // MLP
+    const m = document.getElementById("hm-aug-mlp");
+    heatmap(m, { rows: [0, 0.2], cols: [false, true], domain: [0.53, 0.58],
+      cell: (d, aug) => { const r = AM.rows.find((o) => o.augment === aug && Math.abs(o.dropout - d) < 1e-9); return r && { v: r.val, tip: tipAug(r), champ: r.exp === AM.champ }; },
+      rowFmt: (d) => "dropout " + String(d).replace(".", ","), colFmt: (a) => a ? "com augmentation" : "sem augmentation" });
+    scale(m, [0.53, 0.58], "· contorno = campeão");
+    // tabelas pareadas
+    const augTable = (id, A, name) => {
+      const pv = Object.fromEntries(A.paired_val.map((p) => [p.exp, p]));
+      table(id, [{ t: "Configuração" }, { t: "Folds", num: 1 }, { t: "Validação", num: 1 }, { t: "Teste", num: 1 }, { t: "Gap", num: 1 }, { t: "Melhor época", num: 1 }, { t: "vs sem augmentation", num: 1 }],
+        [...A.rows].sort((a, b) => b.val - a.val).map((r) => {
+          const p = pv[r.exp];
+          return { win: r.exp === A.champ, cells: [`<span class='mono'>${name(r)}</span>`, String(r.folds), pct(r.val) + " " + sd(r.val_std), pct(r.test) + " " + sd(r.test_std), num(r.gap, 3), num(r.best_epoch, 1),
+            r.exp === A.ref ? "referência" : `${pp(p.delta, 2)} · ${p.wins}/${p.n}`] };
+        }));
+    };
+    augTable("tbl-aug-cnn", AC, (r) => `${r.augment ? "com" : "sem"} aug · ${r.conv_blocks} blocos · dropout ${String(r.dropout).replace(".", ",")}`);
+    augTable("tbl-aug-mlp", AM, (r) => `${r.augment ? "com" : "sem"} aug · dropout ${String(r.dropout).replace(".", ",")}`);
+  })();
+
+  /* ---------- recall por classe (dumbbell) ---------- */
+  (() => {
+    const root = document.getElementById("chart-classes");
+    const classes = D.classes.map((c, i) => ({ c, mlp: M.recall_final[i], cnn: C.recall_final[i] })).sort((a, b) => (b.cnn - b.mlp) - (a.cnn - a.mlp));
+    const W = 760, rowH = 30, top = 10, left = 96, right = 92, bottom = 30;
+    const H = top + classes.length * rowH + bottom;
+    const lo = 0.3, hi = 1.0;
+    const x = (v) => left + (v - lo) / (hi - lo) * (W - left - right);
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Recall por classe: MLP versus CNN" }, root);
+    for (let t = 0.3; t <= 1.0001; t += 0.1) {
+      el("line", { x1: x(t), x2: x(t), y1: top, y2: H - bottom, class: "grid-line" }, svg);
+      const tx = el("text", { x: x(t), y: H - 10, "text-anchor": "middle", class: "axis-text" }, svg); tx.textContent = Math.round(t * 100) + "%";
+    }
+    classes.forEach((o, i) => {
+      const cy = top + i * rowH + rowH / 2;
+      const lab = el("text", { x: 0, y: cy, class: "label-text", "dominant-baseline": "middle" }, svg); lab.textContent = PT[o.c];
+      el("line", { x1: x(o.mlp), x2: x(o.cnn), y1: cy, y2: cy, stroke: "var(--hair-strong)", "stroke-width": 2 }, svg);
+      const g = el("g", { tabindex: 0, "data-tip": `<b>${PT[o.c]}</b><br>MLP: ${pct(o.mlp)}<br>CNN: ${pct(o.cnn)}<br>Diferença: ${pp(o.cnn - o.mlp)}` }, svg);
+      el("rect", { x: x(o.mlp) - 10, y: cy - 12, width: x(o.cnn) - x(o.mlp) + 20, height: 24, fill: "transparent" }, g);
+      el("circle", { cx: x(o.mlp), cy, r: 5.5, fill: "var(--mlp)", stroke: "var(--surface)", "stroke-width": 2 }, g);
+      el("circle", { cx: x(o.cnn), cy, r: 5.5, fill: "var(--cnn)", stroke: "var(--surface)", "stroke-width": 2 }, g);
+      const d = el("text", { x: W - right + 14, y: cy, class: "value-text", "dominant-baseline": "middle" }, svg); d.textContent = pp(o.cnn - o.mlp, 0);
+    });
+    const hd = el("text", { x: W - right + 14, y: top - 2, class: "axis-text" }, svg); hd.textContent = "";
+  })();
+
+
+  /* ---------- curvas por época ---------- */
+  const CV = JSON.parse(document.getElementById("curves").textContent);
+  const SERIES_VARS = ["--s1", "--s2", "--s3"];
+  const IDX = { accuracy: [1, 3], loss: [5, 7] };  // colunas [treino, validação] (média); std = +1
+  function niceDomain(lo, hi, metric) {
+    if (metric === "accuracy") { const a = Math.max(0, Math.floor(lo * 20) / 20), b = Math.min(1, Math.ceil(hi * 20) / 20); return [a, b === a ? a + 0.05 : b]; }
+    const a = Math.max(0, Math.floor(lo * 5) / 5), b = Math.ceil(hi * 5) / 5; return [a, b === a ? a + 0.2 : b];
+  }
+  function ticks(lo, hi, metric) {
+    const span = hi - lo; const step = metric === "accuracy" ? (span > 0.4 ? 0.1 : 0.05) : (span > 1.2 ? 0.4 : 0.2);
+    const out = []; for (let t = Math.ceil(lo / step - 1e-9) * step; t <= hi + 1e-9; t += step) out.push(+t.toFixed(4)); return out;
+  }
+  function lineChart(container) {
+    const key = container.dataset.curve, metric = container.dataset.metric, showTrain = container.dataset.train === "1";
+    const spec = CV[key]; const series = spec.series.map((x, i) => ({ ...x, color: `var(${SERIES_VARS[i]})` }));
+    const context = (spec.context || []).map((x) => ({ ...x, color: "var(--muted)", ctx: true }));
+    const all = [...series, ...context];
+    const [ti, vi] = IDX[metric];
+    const vals = []; all.forEach((sr) => sr.points.forEach((p) => { vals.push(p[vi]); if (showTrain && !sr.ctx) vals.push(p[ti]); }));
+    const [ylo, yhi] = niceDomain(Math.min(...vals), Math.max(...vals), metric);
+    const xmax = Math.max(...all.map((sr) => sr.upto));
+    const W = 440, H = 250, L = 42, R = 12, T = 10, B = 30;
+    const x = (e) => L + (e - 1) / Math.max(1, xmax - 1) * (W - L - R);
+    const y = (v) => T + (1 - (v - ylo) / (yhi - ylo)) * (H - T - B);
+    const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": `${metric} por época` }, container);
+    ticks(ylo, yhi, metric).forEach((t) => {
+      el("line", { x1: L, x2: W - R, y1: y(t), y2: y(t), class: "grid-line" }, svg);
+      const tx = el("text", { x: L - 6, y: y(t), "text-anchor": "end", "dominant-baseline": "middle", class: "axis-text" }, svg);
+      tx.textContent = metric === "accuracy" ? Math.round(t * 100) + "%" : t.toFixed(1).replace(".", ",");
+    });
+    const xstep = xmax > 30 ? 10 : xmax > 12 ? 5 : 2;
+    for (let e = 1; e <= xmax; e += 1) {
+      if (e !== 1 && e % xstep !== 0) continue;
+      const tx = el("text", { x: x(e), y: H - 10, "text-anchor": "middle", class: "axis-text" }, svg); tx.textContent = e;
+    }
+    const tl = el("text", { x: W - R, y: H - 10, "text-anchor": "end", class: "axis-text" }, svg); tl.textContent = "";
+    const path = (pts, col) => pts.map((p, i) => `${i ? "L" : "M"}${x(p[0]).toFixed(1)},${y(p[col]).toFixed(1)}`).join("");
+    all.forEach((sr) => {
+      if (showTrain && !sr.ctx) el("path", { d: path(sr.points, ti), fill: "none", stroke: sr.color, "stroke-width": 2, "stroke-dasharray": "5 4", "stroke-linecap": "round", opacity: 0.9 }, svg);
+      el("path", { d: path(sr.points, vi), fill: "none", stroke: sr.color, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+      if (!sr.ctx) {
+        const best = sr.points.reduce((a, p) => (metric === "accuracy" ? p[vi] > a[vi] : p[vi] < a[vi]) ? p : a, sr.points[0]);
+        el("circle", { cx: x(best[0]), cy: y(best[vi]), r: 4.5, fill: sr.color, stroke: "var(--surface)", "stroke-width": 2 }, svg);
+      }
+    });
+    // crosshair + tooltip
+    const cross = el("line", { x1: 0, x2: 0, y1: T, y2: H - B, class: "crosshair", visibility: "hidden" }, svg);
+    const hit = el("rect", { x: L, y: T, width: W - L - R, height: H - T - B, fill: "transparent", tabindex: 0 }, svg);
+    const fmt = (v) => metric === "accuracy" ? pct(v) : num(v, 3);
+    function at(e) {
+      cross.setAttribute("x1", x(e)); cross.setAttribute("x2", x(e)); cross.setAttribute("visibility", "visible");
+      const lines = all.map((sr) => { const p = sr.points.find((q) => q[0] === e); if (!p) return `<span style="opacity:.7">${esc(sr.label)}: parou antes</span>`;
+        return `${esc(sr.label)}: <b>${fmt(p[vi])}</b>${showTrain && !sr.ctx ? ` · treino ${fmt(p[ti])}` : ""}`; });
+      hit.setAttribute("data-tip", `<b>Época ${e}</b><br>${lines.join("<br>")}`);
+    }
+    hit.addEventListener("mousemove", (ev) => {
+      const r = svg.getBoundingClientRect(); const px = (ev.clientX - r.left) / r.width * W;
+      at(Math.max(1, Math.min(xmax, Math.round(1 + (px - L) / (W - L - R) * (xmax - 1)))));
+    });
+    hit.addEventListener("focus", () => at(xmax));
+    hit.addEventListener("mouseleave", () => cross.setAttribute("visibility", "hidden"));
+  }
+  Object.keys(CV).forEach((key) => {
+    const lg = document.querySelector(`[data-legend="${key}"]`);
+    const items = [...CV[key].series.map((sr, i) => `<span><i class="key" style="background:var(${SERIES_VARS[i]})"></i>${esc(sr.label)}</span>`),
+                   ...(CV[key].context || []).map((sr) => `<span><i class="key" style="background:var(--muted)"></i>${esc(sr.label)}</span>`)];
+    lg.innerHTML = items.join("") + lg.innerHTML;
+  });
+  document.querySelectorAll("[data-curve]").forEach(lineChart);
+
+  /* ---------- roteiro ---------- */
+  const outline = [
+    ["Título e equipe", "Estudo de ablação de MLP e CNN no CIFAR-10.", "—"],
+    ["Problema e dados", "CIFAR-10: 60 mil imagens 32×32, 10 classes; objetivo de justificar cada escolha de arquitetura.", "Grade de imagens de exemplo (a produzir)"],
+    ["Metodologia", "5 folds com partições fixas, grid search em blocos, triagem + confirmação, escolha pela validação, teste revelado no fim.", "Diagrama do fluxo dos blocos (a produzir)"],
+    ["Infraestrutura e registro", "Kaggle 2× T4, dados na GPU, W&B + CSV por época, MD5 do dataset, retomada.", "Print do projeto no W&B"],
+    ["Referências (B0)", "Linear 38,8%, MLP original 51,1%, LeNet 69,7% no teste.", "Tabelas das fichas B0"],
+    ["MLP · Topologia (B1)", "Profundidade ajuda até ~2–3 camadas; largura acima de 256 não; empate estatístico no topo.", "<code>heatmap_mlp_b1_…__val-accuracy_mean.png</code>"],
+    ["MLP · Otimização (B2)", "Faixas úteis de lr por algoritmo; colapso do Adam com lr alto; Adam 3e-4 vence.", "<code>heatmap_mlp_b2_…__val-accuracy_mean.png</code>"],
+    ["MLP · Regularização e erro (B3 + A)", "Dropout 0,2 = +1,5 p.p.; dropout atrasa o overfitting; 0,5 subajusta (5/5 folds); entropia cruzada > MSE (5/5).", "<code>heatmap_mlp_b3_…__val-accuracy_mean.png</code> + curvas"],
+    ["MLP · Resultado", "55,2% no teste (+4,0 p.p.); teto da arquitetura; confusões por cor e fundo.", "Gráfico de evolução deste caderno"],
+    ["CNN · Topologia (B1)", "Max pooling vence stride 2 em todas as combinações; 4 blocos, kernel 3.", "<code>heatmap_cnn_b1_…__val-accuracy_mean.png</code>"],
+    ["CNN · Otimização (B2)", "Sem ganho: Adam padrão já adequado; mesmo padrão de colapso da MLP.", "<code>heatmap_cnn_b2_…__val-accuracy_mean.png</code>"],
+    ["CNN · BatchNorm e dropout (B3)", "BatchNorm +3,5 a 4,5 p.p.; dropout só ajuda com BatchNorm; pergunta do pooling em aberto.", "<code>heatmap_cnn_b3_…__val-accuracy_mean.png</code>"],
+    ["CNN · Pooling (+B)", "Novo campeão 3 blocos + pool 2 (79,5%); tamanho final do mapa; reprodutibilidade.", "<code>heatmap_cnn_b3b_pooling_…__val-accuracy_mean.png</code> + <code>pareado_…png</code>"],
+    ["MLP × CNN", "+24,3 p.p. no teste; CNN vence todas as classes; muda o tipo de erro.", "Gráfico por classe deste caderno"],
+    ["Bônus · Augmentation", "Mesmo pré-processamento: CNN +7,4 p.p. (86,4%, 4 blocos voltam a vencer) × MLP +2,7 p.p. (57,8%, limitada por épocas).", "<code>heatmap_cnn_b4_augmentation_…</code> + curvas por época do bônus"],
+    ["Lições metodológicas", "Validação × teste, maldição do vencedor, interação, orçamento, ruído, pareamento.", "Tabela de lições"],
+    ["Conclusões", "O que mais pesou em cada rede e por quê; limitações e próximos passos.", "—"],
+  ];
+  document.getElementById("outline-body").innerHTML = outline.map((r, i) => `<tr><td>${String(i + 1).padStart(2, "0")}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+  /* ---------- índice ativo ---------- */
+  const links = [...document.querySelectorAll(".toc a")];
+  const targets = links.map((a) => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => { if (e.isIntersecting) { links.forEach((l) => l.classList.toggle("active", l.getAttribute("href") === "#" + e.target.id)); } });
+    }, { rootMargin: "-20% 0px -70% 0px" });
+    targets.forEach((t) => io.observe(t));
+  }
+})();
+</script>
+
