@@ -217,6 +217,12 @@ assert report["test/accuracy"].notna().all() and (report["folds"] == 3).all()
 per_class = rep.plot_per_class([b1["exp_name"], b3["exp_name"]], metric="recall")
 assert list(per_class.index) == list(CIFAR10_CLASSES)
 assert rep.champion_name("smoke_mlp_b1") == b1["exp_name"]
+metrics = rep.class_metrics_table(b3["exp_name"])
+assert list(metrics.index) == [*CIFAR10_CLASSES, "geral"] and metrics[["acuracia", "precision", "recall", "f1"]].notna().all().all()
+assert (metrics.loc[list(CIFAR10_CLASSES), "acuracia"] == metrics.loc[list(CIFAR10_CLASSES), "recall"]).all()
+shown = rep.champion_class_metrics("smoke_mlp_b3")
+assert shown.loc["geral", "acuracia"].endswith(tuple("0123456789")) and "%" in shown.loc["geral", "acuracia"]
+assert os.path.isfile(os.path.join(OUT, "_relatorio", f"metricas_por_classe_test_{b3['exp_name']}.png"))
 paired = rep.paired_comparison(final[1]["exp_name"], "smoke_mlp_b1__*")
 assert list(paired["exp_name"]) == [b1["exp_name"]] and paired.loc[0, "folds_comuns"] == 3
 assert paired.loc[0, "vitorias"] + paired.loc[0, "derrotas"] <= 3

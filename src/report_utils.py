@@ -228,6 +228,111 @@ def plot_per_class(pattern="*", metric="recall", split="test", save=True):
     return table
 
 
+def _pct(value, std=None):
+    text = "—" if value is None else f"{value * 100:.1f}%".replace(".", ",")
+    return text if std is None else f"{text} ± {std * 100:.1f}".replace(".", ",")
+
+
+def class_metrics_table(exp_name, split="test", save=True):
+    """Métricas gerais e por classe de UM experimento, em média ± desvio entre folds.
+
+    Linhas: as 10 classes e 'geral'. Colunas: acuracia, precision, recall, f1 (+ *_std).
+    Na linha 'geral', precision/recall/f1 são médias macro. Por classe, a acurácia é a fração
+    das imagens daquela classe classificadas corretamente, ou seja, igual ao recall.
+    split='test' usa o teste (modelo de cada fold); 'val'/'train' usam a melhor época de cada fold.
+    """
+    results = _read_json(os.path.join(output_dir(), exp_name, "resultados.json"))
+    mean = results.get("teste", {}) if split == "test" else results.get("validacao_media", {})
+    std = results.get("teste_std", {}) if split == "test" else results.get("validacao_std", {})
+    rows = {}
+    for cls in CIFAR10_CLASSES:
+        row = {}
+        for metric in ("precision", "recall", "f1"):
+            row[metric] = mean.get(f"{split}/{metric}_per_class/{cls}")
+            row[f"{metric}_std"] = std.get(f"{split}/{metric}_per_class/{cls}")
+        row["acuracia"], row["acuracia_std"] = row["recall"], row["recall_std"]
+        rows[cls] = row
+    rows["geral"] = {"acuracia": mean.get(f"{split}/accuracy"), "acuracia_std": std.get(f"{split}/accuracy")}
+    for metric in ("precision", "recall", "f1"):
+        rows["geral"][metric] = mean.get(f"{split}/{metric}_macro")
+        rows["geral"][f"{metric}_std"] = std.get(f"{split}/{metric}_macro")
+    cols = [c for m in ("acuracia", "precision", "recall", "f1") for c in (m, f"{m}_std")]
+    table = pd.DataFrame(rows).T[cols].astype(float)
+    table.index.name = "classe"
+    if save:
+        path = os.path.join(report_dir(), f"metricas_por_classe_{split}_{exp_name}.csv")
+        table.to_csv(path)
+        print(f"Tabela salva em {path}")
+    return table
+
+
+def plot_class_metrics(exp_name, split="test", save=True):
+    """Figura para slide: acurácia, precision, recall e F1 gerais (macro) no topo e
+    precision, recall e F1 de cada classe abaixo, em % (média ± desvio entre folds).
+    Retorna a tabela formatada em % para exibição no notebook."""
+    table = class_metrics_table(exp_name, split, save=save)
+    results = _read_json(os.path.join(output_dir(), exp_name, "resultados.json"))
+    split_name = {"test": "teste", "val": "validação", "train": "treino"}[split]
+    folds = results.get("folds_concluidos")
+
+    fig, ax = plt.subplots(figsize=(7.2, 6.6))
+    ax.set_xlim(0, 7.2)
+    ax.set_ylim(15.2, 0)
+    ax.axis("off")
+    ax.text(0, 0.35, exp_name, fontsize=11, fontweight="bold", va="center")
+    ax.text(0, 0.95, f"{split_name.capitalize()} · média ± desvio padrão entre {folds} folds", fontsize=8.5, color="#555555", va="center")
+
+    # geral: quatro caixas
+    geral = table.loc["geral"]
+    for k, (metric, label) in enumerate([("acuracia", "Acurácia"), ("precision", "Precision (macro)"),
+                                         ("recall", "Recall (macro)"), ("f1", "F1 (macro)")]):
+        x = k * 1.8
+        ax.add_patch(plt.Rectangle((x, 1.5), 1.7, 1.9, facecolor="#eef3fa", edgecolor="#c9d6ea", linewidth=1))
+        ax.text(x + 0.12, 1.95, label, fontsize=8, color="#555555", va="center")
+        ax.text(x + 0.12, 2.65, _pct(geral[metric]), fontsize=15, fontweight="bold", va="center")
+        ax.text(x + 0.12, 3.12, f"± {geral[f'{metric}_std'] * 100:.1f} p.p.".replace(".", ",", 1), fontsize=8, color="#555555", va="center")
+
+    # por classe
+    top, row_h, label_w, col_w = 4.3, 0.95, 1.8, 1.8
+    for j, label in enumerate(["Precision", "Recall", "F1"]):
+        ax.text(label_w + j * col_w + col_w / 2, top, label, fontsize=9, fontweight="bold", ha="center", va="center")
+    ax.text(0, top, "Classe", fontsize=9, fontweight="bold", va="center")
+    cmap = plt.cm.Blues
+    for i, cls in enumerate(CIFAR10_CLASSES):
+        y = top + 0.55 + i * row_h
+        ax.text(0, y + row_h / 2, cls, fontsize=9, va="center")
+        for j, metric in enumerate(("precision", "recall", "f1")):
+            v, s = table.loc[cls, metric], table.loc[cls, f"{metric}_std"]
+            t = min(1, max(0, (v - 0.3) / 0.7))
+            ax.add_patch(plt.Rectangle((label_w + j * col_w + 0.04, y + 0.05), col_w - 0.08, row_h - 0.1,
+                                       facecolor=cmap(0.08 + 0.8 * t), linewidth=0))
+            ax.text(label_w + j * col_w + col_w / 2, y + row_h / 2, _pct(v, s), fontsize=8.5, ha="center", va="center",
+                    color="white" if t > 0.6 else "black", fontweight="bold" if metric == "f1" else "normal")
+    ax.text(0, top + 0.55 + 10 * row_h + 0.25,
+            "Por classe, a acurácia é a fração das imagens da classe classificadas corretamente (= recall).",
+            fontsize=7.5, color="#555555", va="center")
+    fig.tight_layout()
+    if save:
+        path = os.path.join(report_dir(), f"metricas_por_classe_{split}_{exp_name}.png")
+        fig.savefig(path, dpi=200, bbox_inches="tight")
+        print(f"Figura salva em {path}")
+    plt.show()
+
+    shown = pd.DataFrame({m: [_pct(table.loc[i, m], table.loc[i, f"{m}_std"]) for i in table.index]
+                          for m in ("acuracia", "precision", "recall", "f1")}, index=table.index)
+    return shown
+
+
+def champion_class_metrics(block, split="test", save=True):
+    """plot_class_metrics para o campeão do bloco (escolhido pela validação)."""
+    name = champion_name(block)
+    if name is None:
+        print(f"Campeão do bloco {block} ainda não definido.")
+        return pd.DataFrame()
+    print(f"Campeão de {block}: {name}")
+    return plot_class_metrics(name, split, save)
+
+
 # ============================================================================ grid search em blocos
 def _grid_dir(block):
     return os.path.join(output_dir(), "_grids", block)

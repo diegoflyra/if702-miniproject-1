@@ -276,7 +276,7 @@ def mix(color, t):
 
 def f1_stages(name):
     cls = D["classes"] + ["macro"]
-    fig, axes = plt.subplots(1, 2, figsize=(8.8, 4.3), gridspec_kw={"wspace": 0.06, "width_ratios": [7, 6]})
+    fig, axes = plt.subplots(1, 2, figsize=(10.4, 4.5), gridspec_kw={"wspace": 0.06, "width_ratios": [7, 6]})
     dom = (0.3, 0.95)
     for i, (ax, net, title) in enumerate(zip(axes, ["mlp", "cnn"], ["MLP", "CNN"])):
         cols = [c for c in CH if c["net"] == net]
@@ -286,16 +286,15 @@ def f1_stages(name):
                    dom, lambda r: "média macro" if r == "macro" else PT[r], lambda c: c["short"], show_rows=(i == 0))
         ax.set_title(title, fontsize=9, color=INK2, loc="left")
         for t in ax.texts:
-            t.set_fontsize(8)
-            t.set_text(t.get_text().replace("%", ""))
-    scale_note(fig, dom, "Valores = F1 no teste em %, média de 5 folds.")
+            t.set_fontsize(7.5)
+    scale_note(fig, dom, "F1 no teste, média de 5 folds.")
     return save(fig, name)
 
 
 def confusion_fig(ch, name):
     cm = np.array(ch["confusion"])
     rows = cm.sum(axis=1)
-    fig, ax = plt.subplots(figsize=(5.4, 4.9))
+    fig, ax = plt.subplots(figsize=(6.0, 5.4))
     for i in range(10):
         for j in range(10):
             f = cm[i, j] / rows[i]
@@ -308,7 +307,7 @@ def confusion_fig(ch, name):
             else:
                 face, ink, weight = "#f6f8fb", MUTED, "normal"
             ax.add_patch(Rectangle((j - 0.47, i - 0.47), 0.94, 0.94, facecolor=face, linewidth=0))
-            ax.text(j, i, f"{round(f * 100)}", ha="center", va="center", fontsize=7.5, color=ink, fontweight=weight)
+            ax.text(j, i, f"{round(f * 100)}%", ha="center", va="center", fontsize=7, color=ink, fontweight=weight)
     ax.set_xlim(-0.5, 9.5); ax.set_ylim(9.5, -0.5)
     ax.set_xticks(range(10), [PT[c] for c in D["classes"]], rotation=45, ha="right", fontsize=8)
     ax.set_yticks(range(10), [PT[c] for c in D["classes"]], fontsize=8)
