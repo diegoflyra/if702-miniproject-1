@@ -56,8 +56,8 @@ def run_grid(block):
 
 
 def backup():
-    return code("# Backup parcial: CSV/JSON/PNG/logs (os .pth ficam em outputs/ na aba Output)\n"
-                "!cd /kaggle/working && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip")
+    return code("# Backup parcial: CSV/JSON/PNG/logs (os .pth ficam em outputs/)\n"
+                "!cd {WORKDIR} && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip")
 
 
 def analysis(title, questions):
@@ -109,7 +109,7 @@ anterior, e os complementares e o bônus partem do campeão mais recente.
 - **Escolha sempre pela validação.** O conjunto de teste (10.000 imagens) só é revelado na seção final, para os campeões. Usá-lo para escolher tornaria o número final otimista (vazamento de dados).
 - Diferenças menores que o desvio padrão entre folds não devem ser tratadas como melhora real.
 
-**Registro dos resultados.** Cada experimento grava em `/kaggle/working/outputs/{{exp_name}}/`:
+**Registro dos resultados.** Cada experimento grava em `outputs/{{exp_name}}/` (no Kaggle: `/kaggle/working/outputs`; no Colab: `/content/outputs`; no Jupyter local: a pasta do repositório):
 
 | Arquivo | Conteúdo |
 |---|---|
@@ -120,20 +120,46 @@ anterior, e os complementares e o bônus partem do campeão mais recente.
 | `melhor_modelo.pth` | pesos com a menor `val/loss` (melhor fold); cada fold em `folds/fold_k/` |
 
 Cada bloco grava em `outputs/_grids/{{bloco}}/`: `configs.csv`, `ranking_triagem.csv`, `ranking_final.csv`, `campeao.json` e `logs/`.
-Tabelas e figuras dos relatórios ficam em `outputs/_relatorio/`. Tudo é gravado a cada época, antes do envio ao Weights & Biases.
+Tabelas e figuras dos relatórios ficam em `outputs/_relatorio/`. Tudo é gravado a cada época, antes do envio ao Weights & Biases (se houver chave; senão só o disco).
 
 **Tempo estimado:** ~{time_1gpu} com 1 GPU T4 ou **~{time_2gpu} com 2× T4** (estimativa a partir de medições; varia ±30%).
-Os experimentos são distribuídos entre as GPUs visíveis ({workers} por GPU, ajustável em `WORKERS_PER_GPU`).
+Os experimentos são distribuídos entre as GPUs visíveis ({workers} por GPU, ajustável em `WORKERS_PER_GPU`). Sem GPU o código roda em CPU, mas o estudo deixa de ser praticável.
 
-**Antes de executar (Kaggle):**
-1. *Settings → Accelerator*: **GPU T4 ×2**. *Settings → Internet*: **On**.
-   *Add Input → Datasets*: busque **cifar10-python** e anexe um dataset com a versão Python do CIFAR-10
-   (pasta `cifar-10-batches-py` ou arquivo `cifar-10-python.tar.gz`). Sem ele, o download do servidor original é muito lento.
-2. *Add-ons → Secrets*: `GITHUB_TOKEN` (obrigatório se o repositório for privado) e `WANDB_API_KEY`
-   (opcional — sem ele tudo continua salvo localmente). Marque os dois como anexados a este notebook.
-3. Use **Save Version → Save & Run All (Commit)**: `/kaggle/working` (com `outputs/` e `outputs.zip`) fica salvo na aba *Output*.
-4. **Retomada:** tudo é retomável. Se a sessão cair, adicione o Output da versão anterior como *Input*, preencha `RESUME_FROM`
-   e rode de novo: experimentos e folds concluídos são pulados.
+A célula seguinte descreve a **execução original no Kaggle** (como os resultados do relatório foram gerados) e como repetir o mesmo fluxo em Colab ou Jupyter local.
+""")
+
+
+def execucao_original(kind, time_1gpu, time_2gpu, workers):
+    jobs = "1 experimento por GPU" if workers == 1 else f"{workers} experimentos por GPU"
+    return md(f"""
+## Execução original no Kaggle (e como reproduzir)
+
+Os números do relatório desta {kind} saíram de um **Save Version → Save & Run All (Commit)** no Kaggle. Esse caminho **continua válido**: com os Settings abaixo, o notebook faz o mesmo estudo, nos mesmos blocos.
+
+| Item | Como foi rodado |
+|---|---|
+| Acelerador | *Settings → Accelerator*: **GPU T4 ×2** |
+| Internet | *Settings → Internet*: **On** (clone do GitHub, pip, W&B e fallback do CIFAR-10) |
+| Dataset | *Add Input → Datasets*: **cifar10-python** (pasta `cifar-10-batches-py` ou arquivo `cifar-10-python.tar.gz`). Cópia conferida pelo MD5 oficial; sem ela o download de Toronto é muito lento |
+| Código | clone de `https://github.com/diegoflyra/dfal-neural-networks.git` para `/tmp` (não vai para o Output) |
+| `GITHUB_TOKEN` | *Add-ons → Secrets*, marcado como anexado. Obrigatório se o repositório for privado; o token nunca é impresso |
+| `WANDB_API_KEY` | *Add-ons → Secrets*, anexado. **Opcional** — sem a chave o treino segue e tudo é gravado em disco; com ela cada fold vira uma run no W&B |
+| Paralelismo | `WORKERS_PER_GPU = {workers}` ({jobs}) |
+| Saída | `/kaggle/working/outputs/` e `outputs.zip` na aba *Output* da versão |
+| Duração | **~{time_2gpu}** com 2× T4 (~{time_1gpu} com 1× T4; varia ±30%) |
+| Retomada | anexar o Output da versão anterior como Input e preencher `RESUME_FROM`; folds já concluídos são pulados |
+
+### No Colab, Jupyter local ou outra máquina
+
+O **fluxo dos blocos é o mesmo** (referência → grids → campeão automático → teste só no final). Só o ambiente muda:
+
+1. **GPU.** No Colab: *Runtime → Change runtime type → GPU* (em geral 1 T4, portanto mais lento). Ajuste `WORKERS_PER_GPU` se a memória apertar.
+2. **Dataset.** Coloque `cifar-10-batches-py` ou `cifar-10-python.tar.gz` em `/content`, na pasta `data/` do repositório, ou em `CIFAR10_PATH`. Se não houver cópia, o notebook baixa do servidor oficial (MD5 conferido do mesmo jeito).
+3. **Código.** Abra o notebook **dentro** de uma cópia do repositório (pastas `src/` e `grids/` no diretório atual) **ou** deixe clonar. Repo privado: defina `GITHUB_TOKEN` (Colab Secrets ou variável de ambiente). Repo público: clone sem chave.
+4. **W&B.** Pode omitir. Sem `WANDB_API_KEY` o modo fica `disabled` e os CSV/JSON/PNG/`pth` saem em `outputs/` (`/content/outputs` no Colab; pasta do repositório no Jupyter local).
+5. **Run All.** Igual ao Kaggle. Para retomar, aponte `RESUME_FROM` para a pasta `outputs` de uma execução anterior.
+
+Não é preciso Kaggle, nem W&B, nem (com repo público ou cópia local) token do GitHub. O protocolo experimental não muda.
 """)
 
 
@@ -142,47 +168,100 @@ def setup(workers):
         md("## 0. Preparação do ambiente"),
         code(f"""
 import os
-
-REPO_URL = "{REPO_URL}"
-REPO_DIR = "{REPO_DIR}"  # fora de /kaggle/working: código e dataset não poluem o Output
-
-# Repositório privado: crie o secret GITHUB_TOKEN (Add-ons → Secrets) com um token de leitura do GitHub.
-# O token fica só em /tmp (não vai para o Output) e nunca é impresso.
-clone_url = REPO_URL
-try:
-    from kaggle_secrets import UserSecretsClient
-    clone_url = REPO_URL.replace("https://", "https://" + UserSecretsClient().get_secret("GITHUB_TOKEN") + "@")
-    print("GitHub: usando GITHUB_TOKEN")
-except Exception:
-    print("GitHub: sem GITHUB_TOKEN (funciona apenas se o repositório for público)")
-
-if os.path.isdir(REPO_DIR):
-    !git -C $REPO_DIR pull -q
-else:
-    !git clone -q $clone_url $REPO_DIR
-%cd $REPO_DIR
-!git log -1 --oneline
-"""),
-        code("!pip install -q -r requirements.txt"),
-        code(f"""
 import shutil
+import subprocess
 import sys
 
-import pandas as pd
+REPO_URL = "{REPO_URL}"
+CLONE_DIR = "{REPO_DIR}"
 
-WORKERS_PER_GPU = {workers}  # experimentos simultâneos por GPU
-RESUME_FROM = ""  # ex.: "/kaggle/input/<output-da-versao-anterior>/outputs" para retomar
 
-# CIFAR-10: usa a cópia anexada como Input do Kaggle (segundos), em vez do servidor original (lento).
-# A cópia só é aceita se TODOS os arquivos tiverem o MD5 oficial (os mesmos hashes que o torchvision
-# usa para validar o download de https://www.cs.toronto.edu/~kriz/cifar.html). Se algo divergir,
-# a cópia é descartada e o dataset é baixado do servidor original.
+def _secret(name):
+    value = os.environ.get(name, "").strip()
+    if value:
+        return value
+    try:
+        from kaggle_secrets import UserSecretsClient
+        return UserSecretsClient().get_secret(name)
+    except Exception:
+        pass
+    try:
+        from google.colab import userdata
+        return userdata.get(name)
+    except Exception:
+        pass
+    return ""
+
+
+def _is_repo(path):
+    return os.path.isfile(os.path.join(path, "src", "grid_search.py")) and os.path.isdir(os.path.join(path, "grids"))
+
+
+here = os.getcwd()
+if _is_repo(here):
+    REPO_DIR = here
+    print(f"Código: cópia local em {{REPO_DIR}}")
+else:
+    REPO_DIR = CLONE_DIR
+    token = _secret("GITHUB_TOKEN")
+    clone_url = REPO_URL.replace("https://", f"https://x-access-token:{{token}}@", 1) if token else REPO_URL
+    print("GitHub: usando GITHUB_TOKEN" if token else "GitHub: clone sem token")
+    if os.path.isdir(REPO_DIR) and _is_repo(REPO_DIR):
+        subprocess.run(["git", "-C", REPO_DIR, "pull", "-q"], check=False)
+    else:
+        if os.path.isdir(REPO_DIR):
+            shutil.rmtree(REPO_DIR)
+        cloned = subprocess.run(["git", "clone", "-q", clone_url, REPO_DIR])
+        if cloned.returncode != 0 or not _is_repo(REPO_DIR):
+            raise RuntimeError(
+                "Falha ao clonar o repositório. Repositório privado exige GITHUB_TOKEN "
+                "(Kaggle Secrets, Colab Secrets ou variável de ambiente), ou abra o notebook "
+                "a partir de uma cópia local do projeto (pasta com src/ e grids/)."
+            )
+    print(f"Código: {{REPO_DIR}}")
+
+os.chdir(REPO_DIR)
+%cd {{REPO_DIR}}
+print(subprocess.run(["git", "log", "-1", "--oneline"], capture_output=True, text=True).stdout.strip())
+"""),
+        code("""
+import importlib.util
+import subprocess
+import sys
+
+skip, pkgs = [], []
+with open("requirements.txt", encoding="utf-8") as f:
+    for line in f:
+        pkg = line.strip()
+        if not pkg or pkg.startswith("#"):
+            continue
+        name = pkg.split("==")[0].split(">=")[0].split("<=")[0].split("~=")[0].split("[")[0].strip().lower()
+        if name in {"torch", "torchvision"} and importlib.util.find_spec(name) is not None:
+            skip.append(name)
+            continue
+        pkgs.append(pkg)
+if skip:
+    print("Já instalado, não reinstalar (preserva CUDA do ambiente):", ", ".join(skip))
+if pkgs:
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "-q", *pkgs])
+"""),
+        code(f"""
 import glob
 import hashlib
+import os
+import shutil
+import sys
 import tarfile
 
+import pandas as pd
 from torchvision.datasets import CIFAR10
 
+WORKERS_PER_GPU = {workers}  # experimentos simultâneos por GPU
+RESUME_FROM = ""  # pasta outputs de uma execução anterior, para retomar
+CIFAR10_PATH = ""  # pasta cifar-10-batches-py ou arquivo .tar.gz; vazio = procurar / baixar
+
+# CIFAR-10: usa uma cópia local se o MD5 for o oficial (os mesmos hashes que o torchvision
+# usa para validar https://www.cs.toronto.edu/~kriz/cifar.html). Caso contrário baixa o original.
 DATA_DIR = os.path.join(REPO_DIR, "data")
 CIFAR_DIR = os.path.join(DATA_DIR, "cifar-10-batches-py")
 OFFICIAL_MD5 = dict(CIFAR10.train_list + CIFAR10.test_list + [[CIFAR10.meta["filename"], CIFAR10.meta["md5"]]])
@@ -209,41 +288,83 @@ def cifar_is_official(folder):
     return ok
 
 
+def _unique(paths):
+    seen, out = set(), []
+    for path in paths:
+        if path and os.path.exists(path) and path not in seen:
+            seen.add(path)
+            out.append(path)
+    return out
+
+
+def find_cifar():
+    folders, archives = [], []
+    explicit = CIFAR10_PATH or os.environ.get("CIFAR10_PATH", "").strip()
+    roots = [explicit, "/kaggle/input", "/content", DATA_DIR, os.getcwd()]
+    for root in roots:
+        if not root or not os.path.exists(root):
+            continue
+        if os.path.isdir(root) and os.path.isfile(os.path.join(root, "data_batch_1")):
+            folders.append(root)
+        if os.path.isfile(root) and root.endswith((".tar.gz", ".tgz")):
+            archives.append(root)
+        if os.path.isdir(root):
+            # /content/drive no Colab é grande demais para glob recursivo.
+            if os.path.abspath(root) == "/content":
+                for base in (root, os.path.join(root, "data")):
+                    folders.append(os.path.join(base, "cifar-10-batches-py"))
+                    archives.append(os.path.join(base, "cifar-10-python.tar.gz"))
+            else:
+                folders.extend(glob.glob(os.path.join(root, "**", "cifar-10-batches-py"), recursive=True))
+                archives.extend(glob.glob(os.path.join(root, "**", "cifar-10-python.tar.gz"), recursive=True))
+    return _unique(folders), _unique(archives)
+
+
 if not os.path.isdir(CIFAR_DIR):
-    folders = glob.glob("/kaggle/input/**/cifar-10-batches-py", recursive=True)
-    archives = glob.glob("/kaggle/input/**/cifar-10-python.tar.gz", recursive=True)
+    folders, archives = find_cifar()
     if folders:
         print(f"Cópia encontrada: {{folders[0]}}")
-        shutil.copytree(folders[0], CIFAR_DIR)
+        if os.path.abspath(folders[0]) != os.path.abspath(CIFAR_DIR):
+            shutil.copytree(folders[0], CIFAR_DIR)
     elif archives:
         print(f"Arquivo encontrado: {{archives[0]}} | md5 {{md5(archives[0])}} (oficial: {{CIFAR10.tgz_md5}})")
         with tarfile.open(archives[0]) as tar:
             tar.extractall(DATA_DIR)
     else:
-        print("AVISO: CIFAR-10 não encontrado nos Inputs; será baixado do servidor original (pode levar muitos minutos).")
+        print("CIFAR-10 não encontrado localmente; baixando do servidor oficial (pode levar vários minutos).")
+        CIFAR10(root=DATA_DIR, train=True, download=True)
+        CIFAR10(root=DATA_DIR, train=False, download=True)
 
 if os.path.isdir(CIFAR_DIR):
     if cifar_is_official(CIFAR_DIR):
         print("CIFAR-10 verificado: todos os arquivos são idênticos aos oficiais.")
     else:
         shutil.rmtree(CIFAR_DIR)
-        print("CÓPIA REJEITADA: arquivos diferentes dos oficiais. O dataset será baixado do servidor original.")
+        print("CÓPIA REJEITADA: arquivos diferentes dos oficiais. Baixando do servidor original.")
+        CIFAR10(root=DATA_DIR, train=True, download=True)
+        CIFAR10(root=DATA_DIR, train=False, download=True)
 
-# Onde os resultados são gravados (lido por run_experiment.py, grid_search.py e report_utils.py)
-os.environ["EXP_OUTPUT_DIR"] = "/kaggle/working/outputs"
+if os.path.isdir("/kaggle/working"):
+    WORKDIR = "/kaggle/working"
+elif os.path.isdir("/content"):
+    WORKDIR = "/content"
+else:
+    WORKDIR = REPO_DIR
+
+os.environ["EXP_OUTPUT_DIR"] = os.path.join(WORKDIR, "outputs")
 os.makedirs(os.environ["EXP_OUTPUT_DIR"], exist_ok=True)
+print(f"Resultados em {{os.environ['EXP_OUTPUT_DIR']}}")
 if RESUME_FROM:
     shutil.copytree(RESUME_FROM, os.environ["EXP_OUTPUT_DIR"], dirs_exist_ok=True)
     print(f"Resultados anteriores copiados de {{RESUME_FROM}}; o que já foi concluído será pulado.")
 
-# Weights & Biases via Kaggle Secrets; se falhar, os experimentos seguem apenas com o registro local.
-try:
-    from kaggle_secrets import UserSecretsClient
-    os.environ["WANDB_API_KEY"] = UserSecretsClient().get_secret("WANDB_API_KEY")
+wandb_key = _secret("WANDB_API_KEY")
+if wandb_key:
+    os.environ["WANDB_API_KEY"] = wandb_key
     print("W&B: chave carregada.")
-except Exception as exc:
+else:
     os.environ["WANDB_MODE"] = "disabled"
-    print(f"W&B desativado ({{exc}}). Resultados continuam em {{os.environ['EXP_OUTPUT_DIR']}}.")
+    print(f"W&B desativado (sem chave). Resultados continuam em {{os.environ['EXP_OUTPUT_DIR']}}.")
 
 sys.path.insert(0, os.path.join(REPO_DIR, "src"))
 import report_utils as rep
@@ -251,7 +372,11 @@ import report_utils as rep
         code("""
 # Verificações rápidas antes de gastar GPU (sem treino):
 # GPUs, flags → arquitetura, carregamento em GPU/K-fold (baixa o CIFAR-10) e construção de todas as configurações dos grids
-!nvidia-smi -L
+import shutil
+if shutil.which("nvidia-smi"):
+    !nvidia-smi -L
+else:
+    print("nvidia-smi não encontrado; o treino usa o device que o PyTorch enxergar (CPU se não houver GPU).")
 !python tests/check_hyperparams.py
 !python tests/check_data_loader.py
 !python tests/check_grids.py
@@ -380,7 +505,7 @@ referência pareada.
     ]
 
 
-def final_section(prefix, blocks, main_block, bonus_block, per_class_note):
+def final_section(prefix, blocks, main_block, bonus_block, per_class_note, class_blocks, class_blocks_desc):
     return [
         md(f"""
 ## Resultado final — teste revelado
@@ -403,7 +528,16 @@ rep.plot_per_class(comparar, metric="recall")
 rep.plot_per_class(comparar, metric="precision")
 pd.read_csv(os.path.join(os.environ["EXP_OUTPUT_DIR"], campeao_principal, "matriz_confusao_teste.csv"), index_col=0)
 """),
-        code("!cd /kaggle/working && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip"),
+        md(f"""
+#### Métricas gerais e por classe dos campeões
+
+Para cada campeão: **acurácia, precision, recall e F1 gerais** (macro, no topo da figura) e **precision, recall e F1 de cada classe**
+(tabela), no teste, em média ± desvio entre os 5 modelos (um por fold). Por classe, a acurácia é a fração das imagens daquela
+classe classificadas corretamente, igual ao recall. {class_blocks_desc}
+Figura e CSV: `outputs/_relatorio/metricas_por_classe_test_<experimento>.*`.
+"""),
+        *[code(f'rep.champion_class_metrics("{block}")') for block in class_blocks],
+        code("!cd {WORKDIR} && zip -qr outputs.zip outputs -x '*.pth' && ls -lh outputs.zip"),
         md("## 📝 Conclusões\n\n"
            "- **Estrutura base que melhor absorveu o CIFAR-10 (Bloco 1) e por quê:** _…_\n"
            "- **Ganho de otimização (Bloco 2) e sensibilidade à taxa de aprendizagem:** _…_\n"
@@ -417,7 +551,7 @@ pd.read_csv(os.path.join(os.environ["EXP_OUTPUT_DIR"], campeao_principal, "matri
 
 
 # =============================================================================== MLP
-mlp = [intro("MLP", "2 h", "1h–1h30", 2), *setup(2),
+mlp = [intro("MLP", "2 h", "1h–1h30", 2), execucao_original("MLP", "2 h", "1h–1h30", 2), *setup(2),
     md(f"""
 ## Bloco 0 — Referências
 
@@ -514,11 +648,13 @@ e a diferença de convergência entre MSE e entropia cruzada.
     *final_section("mlp", ["mlp_b0_referencia", "mlp_b1_topologia", "mlp_b2_otimizacao", "mlp_b2_checagem",
                            "mlp_b3_regularizacao", "mlp_b3b_dropout_longo", "mlp_b4_augmentation"],
                    "mlp_b3b_dropout_longo", "mlp_b4_augmentation",
-                   "Classes com baixo recall indicam confusões sistemáticas (veja a matriz de confusão)."),
+                   "Classes com baixo recall indicam confusões sistemáticas (veja a matriz de confusão).",
+                   ["mlp_b3_regularizacao", "mlp_b4_augmentation"],
+                   "Campeões do Bloco 3 (regularização) e do Bônus (augmentation)."),
 ]
 
 # =============================================================================== CNN
-cnn = [intro("CNN", "6 h", "3h–3h30", 1), *setup(1),
+cnn = [intro("CNN", "6 h", "3h–3h30", 1), execucao_original("CNN", "6 h", "3h–3h30", 1), *setup(1),
     md(f"""
 ## Bloco 0 — Referência
 
@@ -616,7 +752,9 @@ descartadas e listadas abaixo. Épocas e paciência aumentadas.
     *final_section("cnn", ["cnn_b0_referencia", "cnn_b1_topologia", "cnn_b2_otimizacao", "cnn_b2_checagem",
                            "cnn_b3_regularizacao", "cnn_b3b_pooling", "cnn_b4_augmentation"],
                    "cnn_b3b_pooling", "cnn_b4_augmentation",
-                   "Compare com as classes mais difíceis das MLPs: as convoluções resolveram as mesmas confusões?"),
+                   "Compare com as classes mais difíceis das MLPs: as convoluções resolveram as mesmas confusões?",
+                   ["cnn_b3_regularizacao", "cnn_b3b_pooling", "cnn_b4_augmentation"],
+                   "Campeões do Bloco 3 (regularização), do Complementar B (campeão principal da CNN) e do Bônus (augmentation)."),
 ]
 
 metadata = {
