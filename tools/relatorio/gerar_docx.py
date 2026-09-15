@@ -1,4 +1,4 @@
-"""Gera relatorio/caderno-cifar10.docx (para abrir no Google Docs) e as figuras em relatorio/figuras/.
+"""Gera "miniprojeto 1 doc.docx" na raiz (para abrir no Google Docs) e as figuras em relatorio/figuras/.
 
 Uso (na raiz do repositório, depois de extrair_dados.py):
     python tools/relatorio/gerar_docx.py
@@ -20,6 +20,7 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
 from docx.shared import Cm, Pt, RGBColor
+from matplotlib.colors import to_hex, to_rgb
 from matplotlib.patches import Rectangle
 
 OUT_DIR = "relatorio"
@@ -27,13 +28,13 @@ FIG = os.path.join(OUT_DIR, "figuras")
 os.makedirs(FIG, exist_ok=True)
 D = json.load(open(os.path.join(OUT_DIR, "dados", "doc_data.json")))
 CV = json.load(open(os.path.join(OUT_DIR, "dados", "curves.json")))
-M, C, AUG = D["mlp"], D["cnn"], D["aug"]
+M, C, AUG, CH, HY = D["mlp"], D["cnn"], D["aug"], D["champions"], D["hyper"]
 PT = {"airplane": "avião", "automobile": "automóvel", "bird": "pássaro", "cat": "gato", "deer": "cervo",
       "dog": "cachorro", "frog": "sapo", "horse": "cavalo", "ship": "navio", "truck": "caminhão"}
 VAL = "val/accuracy_mean"
 
 # ============================================================================ estilo dos gráficos
-INK, INK2, MUTED, HAIR, SURF = "#121722", "#465063", "#6f7889", "#dce1e9", "#ffffff"
+INK, INK2, MUTED, HAIR, SURF, ACCENT = "#121722", "#465063", "#6f7889", "#dce1e9", "#ffffff", "#0d6b66"
 MLP_C, CNN_C = "#2a78d6", "#eb6834"
 SERIES = ["#4a3aa7", "#1baf7a", "#eda100"]
 SEQ = ["#e6eefa", "#cde2fb", "#9ec5f4", "#6da7ec", "#2a78d6", "#1c5cab", "#0d366b"]
@@ -267,6 +268,60 @@ def dumbbell(name, left, right, left_label, right_label, left_color, right_color
 
 FIG_CLASSES = dumbbell("recall_por_classe.png", M["recall_final"], C["recall_final"], "MLP 4×256 (55,2%)", "CNN 3 blocos (79,5%)", MLP_C, CNN_C)
 
+def mix(color, t):
+    """Mistura `color` com branco: t = 0 → branco, t = 1 → cor pura."""
+    a, b = np.array(to_rgb(color)), np.array(to_rgb(SURF))
+    return to_hex(b + (a - b) * t)
+
+
+def f1_stages(name):
+    cls = D["classes"] + ["macro"]
+    fig, axes = plt.subplots(1, 2, figsize=(8.8, 4.3), gridspec_kw={"wspace": 0.06, "width_ratios": [7, 6]})
+    dom = (0.3, 0.95)
+    for i, (ax, net, title) in enumerate(zip(axes, ["mlp", "cnn"], ["MLP", "CNN"])):
+        cols = [c for c in CH if c["net"] == net]
+        heatmap_ax(ax, cls, cols,
+                   lambda r, c: ((c["overall"]["test"]["f1_macro"]["mean"] if r == "macro" else c["classes"]["test"]["f1"]["mean"][D["classes"].index(r)]),
+                                 "campeã" in c["label"]),
+                   dom, lambda r: "média macro" if r == "macro" else PT[r], lambda c: c["short"], show_rows=(i == 0))
+        ax.set_title(title, fontsize=9, color=INK2, loc="left")
+        for t in ax.texts:
+            t.set_fontsize(8)
+            t.set_text(t.get_text().replace("%", ""))
+    scale_note(fig, dom, "Valores = F1 no teste em %, média de 5 folds.")
+    return save(fig, name)
+
+
+def confusion_fig(ch, name):
+    cm = np.array(ch["confusion"])
+    rows = cm.sum(axis=1)
+    fig, ax = plt.subplots(figsize=(5.4, 4.9))
+    for i in range(10):
+        for j in range(10):
+            f = cm[i, j] / rows[i]
+            if i == j:
+                t = 0.18 + 0.72 * min(1, max(0, (f - 0.2) / 0.75))
+                face, ink, weight = mix(ACCENT, t), ("#ffffff" if t > 0.52 else INK), "bold"
+            elif f >= 0.005:
+                k = min(6, int(min(1, f / 0.2) * 7))
+                face, ink, weight = SEQ[k], ("#ffffff" if k >= 4 else INK), "normal"
+            else:
+                face, ink, weight = "#f6f8fb", MUTED, "normal"
+            ax.add_patch(Rectangle((j - 0.47, i - 0.47), 0.94, 0.94, facecolor=face, linewidth=0))
+            ax.text(j, i, f"{round(f * 100)}", ha="center", va="center", fontsize=7.5, color=ink, fontweight=weight)
+    ax.set_xlim(-0.5, 9.5); ax.set_ylim(9.5, -0.5)
+    ax.set_xticks(range(10), [PT[c] for c in D["classes"]], rotation=45, ha="right", fontsize=8)
+    ax.set_yticks(range(10), [PT[c] for c in D["classes"]], fontsize=8)
+    ax.set_xlabel("classe prevista", fontsize=8.5); ax.set_ylabel("classe real", fontsize=8.5)
+    ax.tick_params(length=0)
+    for sp in ax.spines.values():
+        sp.set_visible(False)
+    return save(fig, name)
+
+
+FIG_F1_STAGES = f1_stages("f1_por_classe_etapas.png")
+FIG_CM = {ch["exp"]: confusion_fig(ch, f"confusao_{ch['exp']}.png") for ch in CH}
+
 # ============================================================================ documento
 doc = Document()
 sec = doc.sections[0]
@@ -401,6 +456,59 @@ def stage(s):
 
 def rank_row(r, name):
     return [name, pct(r[VAL]) + " " + sd(r["val/accuracy_std"]), num(r["gap/accuracy_mean"], 3), num(r["melhor_epoca_media"]), params(r["num_parameters"])]
+
+
+def class_table(ch):
+    """Precision, recall e F1 por classe em treino, validação e teste (média de 5 folds; ± do F1 no teste)."""
+    splits = [("train", "Treino"), ("val", "Validação"), ("test", "Teste")]
+    t = doc.add_table(rows=2, cols=11)
+    t.style = "Table Grid"
+    t.alignment = WD_TABLE_ALIGNMENT.CENTER
+
+    def head(cell, text):
+        cell.text = ""
+        r = cell.paragraphs[0].add_run(text); r.bold = True; r.font.size = Pt(7.5); r.font.color.rgb = RGBColor.from_string("465063")
+        cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+        cell.paragraphs[0].paragraph_format.space_after = Pt(0)
+        shade(cell, "EEF1F5")
+
+    top = t.rows[0].cells
+    top[0].merge(t.rows[1].cells[0]); head(top[0], "Classe")
+    for k, (_, name) in enumerate(splits):
+        a = top[1 + 3 * k].merge(top[3 + 3 * k]); head(a, name)
+        for m, lab in enumerate(("P", "R", "F1")):
+            head(t.rows[1].cells[1 + 3 * k + m], lab)
+    top[10].merge(t.rows[1].cells[10]); head(top[10], "± F1 teste")
+    S = ch["classes"]
+    f1t = S["test"]["f1"]["mean"]
+    worst = int(np.argmin(f1t))
+    for i, c in enumerate(D["classes"]):
+        cells = t.add_row().cells
+        vals = [PT[c]] + [num(S[sp][m]["mean"][i] * 100) for sp, _ in splits for m in ("precision", "recall", "f1")] + [num(S["test"]["f1"]["std"][i] * 100)]
+        for j, v in enumerate(vals):
+            cells[j].text = ""
+            r = cells[j].paragraphs[0].add_run(v); r.font.size = Pt(8)
+            if j == 9:
+                r.bold = True
+            cells[j].paragraphs[0].paragraph_format.space_after = Pt(0)
+            if j:
+                cells[j].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
+            if i == worst:
+                shade(cells[j], "FBEFD6")
+    O = ch["overall"]
+    cells = t.add_row().cells
+    vals = ["Macro"] + [num(O[sp][k]["mean"] * 100) for sp, _ in splits for k in ("precision_macro", "recall_macro", "f1_macro")] + [num(O["test"]["f1_macro"]["std"] * 100)]
+    for j, v in enumerate(vals):
+        cells[j].text = ""
+        r = cells[j].paragraphs[0].add_run(v); r.font.size = Pt(8); r.bold = True
+        cells[j].paragraphs[0].paragraph_format.space_after = Pt(0)
+        if j:
+            cells[j].paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.RIGHT
+        shade(cells[j], "EEF1F5")
+    for row in t.rows:
+        for j, w in enumerate([2.3] + [1.4] * 9 + [1.6]):
+            row.cells[j].width = Cm(w)
+    doc.add_paragraph().paragraph_format.space_after = Pt(2)
 
 
 # ---------------------------------------------------------------- capa e resumo
@@ -552,7 +660,7 @@ question("Como a janela de pooling, o dropout nas camadas densas e a BatchNorm a
          "Grid: pooling {0, 2, 3} × dropout {0; 0,3; 0,5} × BatchNorm {não, sim} = 18 combinações, 6 válidas. 50 épocas, paciência 7.")
 figure(FIG_HM_CNN_B3, "CNN, Bloco 3: acurácia de validação na triagem (pooling 2×2, único válido com 4 blocos).", width=Cm(10))
 figure(FIG_CV["cnn_b3"], "CNN, Bloco 3: curvas por época com e sem BatchNorm (dropout 0,5, média dos folds 1–3).")
-bullets(["**BatchNorm foi o maior ganho entre os hiperparâmetros da CNN: +3,5 a 4,5 p.p.**",
+bullets(["**BatchNorm foi o maior ganho entre os hiperparâmetros da CNN: +3,3 a +4,2 p.p.**",
          "Sem BatchNorm, o dropout não faz diferença. Com BatchNorm, dropout 0,3 e 0,5 empatam no topo, e o 0,5 reduziu o gap de 0,142 para 0,095.",
          "O teste ficou ~1 p.p. abaixo da validação: dentro de 1 desvio, e esperado depois de escolher o melhor entre várias opções."])
 facts([("Campeão", "BN · dropout 0,5 · pool 2"), ("Validação · 5 folds", "79,2% ± 1,3"), ("Teste", "78,3% ± 1,1"), ("Ganho sobre o Bloco 2", "+2,6 p.p.")])
@@ -590,6 +698,30 @@ table(["MLP · real", "previsto", "imagens", "CNN · real", "previsto", "imagens
 para("Na MLP, confusões como **avião → navio** e **caminhão ↔ automóvel** indicam decisão guiada por **cor e fundo** (céu e mar azuis). "
      "Na CNN, esses erros saem do topo e o que sobra se concentra entre **animais parecidos** (cachorro ↔ gato, pássaro → cervo): a rede passou a olhar forma e textura.")
 
+# ---------------------------------------------------------------- métricas por classe dos campeões
+doc.add_heading("Métricas por classe e matrizes de confusão", level=1)
+para("Precision (P), recall (R) e F1 de cada classe para os 13 melhores modelos: o campeão de cada etapa, as referências e os bônus. "
+     "Treino e validação são a média dos 5 folds na melhor época (treino medido em modo avaliação, sem dropout e sem augmentation); "
+     "o teste é a média dos 5 modelos, um por fold, nas 10.000 imagens de teste. As matrizes de confusão somam os 5 folds: "
+     "50.000 previsões, 5.000 por classe real, com cada célula em % da linha.")
+figure(FIG_F1_STAGES, "F1 no teste por classe em cada etapa (média de 5 folds). Contorno = campeã de cada rede sem augmentation.")
+doc.add_heading("O que concluir", level=2)
+bullets(D["class_conclusions"])
+para("Nas tabelas a seguir, valores em %; a linha destacada é a classe de menor F1 no teste.", size=9, color="6f7889")
+for net, title in (("mlp", "MLP"), ("cnn", "CNN")):
+    doc.add_heading(f"Campeões da {title}", level=2)
+    for ch in [c for c in CH if c["net"] == net]:
+        doc.add_heading(f"{ch['label']} · {ch['sub']}", level=3)
+        O = ch["overall"]
+        para(f"`{ch['exp']}` · teste: acurácia **{pct(O['test']['accuracy']['mean'])} {sd(O['test']['accuracy']['std'])}**, "
+             f"F1 macro {pct(O['test']['f1_macro']['mean'])}, loss {num(O['test']['loss']['mean'], 3)} · validação: {pct(O['val']['accuracy']['mean'])} · "
+             f"melhor época {num(ch['best_epoch'])} · {params(ch['params'])} parâmetros", size=9, color="465063")
+        class_table(ch)
+        total = f"{sum(map(sum, ch['confusion'])):,}".replace(",", ".")
+        figure(FIG_CM[ch["exp"]], f"Matriz de confusão no teste · {ch['label']} ({ch['sub']}). % de cada linha, soma dos {ch['cm_folds']} folds "
+               f"({total} previsões). Diagonal = recall; azul = erros, mais escuro até 20% da linha.", width=Cm(11.5))
+        bullets(ch["reading"], size=9.5)
+
 # ---------------------------------------------------------------- bônus
 doc.add_heading("Bônus · Data augmentation", level=1)
 para("Pré-processamento, não hiperparâmetro da rede: por isso fica fora da sequência principal de blocos. **RandomCrop 32 com padding 4** "
@@ -614,7 +746,7 @@ question("Quanto a diversidade extra de imagens acrescenta à CNN campeã? Com m
 figure(FIG_HM_AUG_CNN, "CNN, bônus: acurácia de validação sem e com augmentation (mesma escala de cor).", width=Cm(14))
 aug_table("cnn", lambda r: f"{'com' if r['augment'] else 'sem'} aug · {r['conv_blocks']} blocos · dropout {r['dropout']:g}".replace(".", ","))
 figure(FIG_CV["cnn_aug"], "CNN, bônus: curvas por época (média dos folds 1–3). Com augmentation, o treino segue útil por muito mais épocas.")
-bullets(["**O maior salto de todo o estudo: +7,9 p.p. na validação** sobre a mesma receita sem augmentation, vencendo em **5 de 5 folds**; no teste, +7,4 p.p. (5 de 5).",
+bullets(["**O maior salto de todo o estudo: +7,8 p.p. na validação** sobre a mesma receita sem augmentation, vencendo em **5 de 5 folds**; no teste, +7,4 p.p. (5 de 5).",
          "**A rede de 4 blocos voltou a vencer** (+0,8 p.p. sobre 3 blocos, em 3 de 3 folds). Sem augmentation, 3 e 4 blocos empatam. Com mais diversidade de dados, a capacidade extra deixa de virar overfitting: é a interação entre blocos no sentido inverso.",
          "O gap treino–validação caiu de 0,105 para 0,069, e a melhor época passou de ~10 para ~31: o modelo aprende por mais tempo sem decorar.",
          "O dropout **continuou útil**: 0,5 ≥ 0,3 com augmentation. A hipótese de que augmentation dispensaria o dropout não se confirmou."])
@@ -638,6 +770,27 @@ callout("Ressalva importante", "O campeão da MLP com augmentation foi **limitad
         "57,8% é um **piso**; com mais épocas o ganho provavelmente seria um pouco maior. A receita sem augmentation reproduziu exatamente o resultado anterior (55,0% de validação).")
 slides(["`outputs_augmentation/_relatorio/heatmap_mlp_b4_augmentation_dropout_x_augment__melhor_epoca_media.png` mostra o custo em épocas.",
         "Mensagem: “o mesmo pré-processamento vale +7,4 p.p. na CNN e +2,7 p.p. na MLP — a diferença é a estrutura espacial”."])
+
+# ---------------------------------------------------------------- hiperparâmetros
+doc.add_heading("Conclusões por hiperparâmetro", level=1)
+para("Os blocos respondem “qual configuração venceu”; esta seção responde “o que cada hiperparâmetro faz e por quê”. "
+     "Para cada um: o efeito medido na validação, o resultado por valor testado, a evidência e o mecanismo que explica o resultado.")
+table(["Hiperparâmetro", "Rede", "Escolha", "Efeito na validação", "Veredito"],
+      [[f"**{h['name']}**", " · ".join(h["nets"]), h["choice"], f"**{h['effect']}** · {h['effect_note']}", h["verdict"]] for h in HY],
+      widths=[3.6, 1.6, 4.0, 5.0, 2.8], font=8.5)
+for group in dict.fromkeys(h["group"] for h in HY):
+    doc.add_heading(group, level=2)
+    for h in [x for x in HY if x["group"] == group]:
+        doc.add_heading(h["name"], level=3)
+        facts([("Rede", " · ".join(h["nets"])), ("Valores", h["values"]), ("Escolha", h["choice"]), ("Efeito", f"{h['effect']} ({h['effect_note']})"), ("Veredito", h["verdict"])])
+        if h["marg"]:
+            table(["Valor", "Validação", "Melhor época", "Detalhe"],
+                  [[("**" + m["label"] + "** (escolha)") if m["champ"] else m["label"], pct(m["mean"]), num(m["ep"]),
+                    f"média de {m['n']} configurações · melhor {pct(m['best'])}" if m["n"] > 1 else "—"] for m in h["marg"]],
+                  widths=[5.2, 2.6, 2.6, 6.6], font=8.5, highlight=lambda i, h=h: h["marg"][i]["champ"])
+            para(h["marg_note"], size=8.5, color="6f7889")
+        bullets(h["evidence"], size=9.5)
+        callout("Por quê", h["why"])
 
 # ---------------------------------------------------------------- lições
 doc.add_heading("Lições metodológicas", level=1)
@@ -665,10 +818,12 @@ outline = [
     ("MLP · Resultado", "55,2% no teste (+4,0 p.p.); teto da arquitetura; confusões por cor e fundo.", "Evolução da MLP"),
     ("CNN · Topologia (B1)", "Max pooling vence stride 2 em todas as combinações; 4 blocos, kernel 3.", "Figuras do Bloco 1 da CNN"),
     ("CNN · Otimização (B2)", "Sem ganho: Adam padrão já adequado; mesmo padrão de colapso da MLP.", "Heatmap do Bloco 2 da CNN"),
-    ("CNN · BatchNorm e dropout (B3)", "BatchNorm +3,5 a 4,5 p.p.; dropout só ajuda com BatchNorm; pergunta do pooling em aberto.", "Heatmap + curvas do Bloco 3"),
+    ("CNN · BatchNorm e dropout (B3)", "BatchNorm +3,3 a +4,2 p.p.; dropout só ajuda com BatchNorm; pergunta do pooling em aberto.", "Heatmap + curvas do Bloco 3"),
     ("CNN · Pooling (+B)", "Novo campeão 3 blocos + pool 2 (79,5%); tamanho final do mapa; reprodutibilidade.", "Heatmap, curvas e comparação pareada"),
     ("MLP × CNN", "+24,3 p.p. no teste; CNN vence todas as classes; muda o tipo de erro.", "Recall por classe"),
     ("Bônus · Augmentation", "Mesmo pré-processamento: CNN +7,4 p.p. (86,4%, 4 blocos voltam a vencer) × MLP +2,7 p.p. (57,8%, limitada por épocas).", "Heatmaps e curvas do bônus"),
+    ("Métricas por classe", "Gato é a pior classe e automóvel/navio as melhores nos 13 campeões; gato ↔ cachorro domina as confusões; a CNN ganha mais nos animais.", "F1 por etapa + matriz de confusão do campeão"),
+    ("Hiperparâmetros: o que pesou", "Decisivos: augmentation (CNN), max pooling × stride, BatchNorm. Moderados: profundidade, kernel, janela de pooling, dropout. Empate: otimizador. Maior risco: learning rate.", "Tabela-resumo de hiperparâmetros"),
     ("Lições metodológicas", "Validação × teste, maldição do vencedor, interação, orçamento, ruído, dados × arquitetura, pareamento.", "Tabela de lições"),
     ("Conclusões", "O que mais pesou em cada rede e por quê; limitações e próximos passos.", "—"),
 ]
@@ -679,13 +834,13 @@ doc.add_heading("Onde está cada coisa", level=1)
 table(["Recurso", "Local"], [
     ["W&B", "wandb.ai/models-universidade-federal-de-pernambuco/cifar10-rn · uma run por fold (`{experimento}-foldK`), agrupadas pelo nome do experimento. Para ver médias entre folds, agrupe por Group."],
     ["Resultados locais", "`outputs_mlp/`, `outputs_cnn/`, `outputs_final/` (complementares) e `outputs_augmentation/` (bônus) no repositório `~/rn`."],
-    ["Figuras prontas", "`outputs_*/_relatorio/*.png`. As figuras deste documento estão em `relatorio/figuras/`."],
+    ["Figuras prontas", "`outputs_*/_relatorio/*.png`. As figuras deste documento (inclusive as matrizes de confusão somadas por fold) estão em `relatorio/figuras/`."],
     ["Rankings e campeões", "`outputs_*/_grids/{bloco}/`: `ranking_triagem.csv`, `ranking_final.csv`, `campeao.json`."],
     ["Notebooks", "`Kaggle_MLP.ipynb` e `Kaggle_CNN.ipynb`: cada um executa o estudo completo da rede (blocos, complementar e bônus) em uma única execução."],
     ["Código", "github.com/diegoflyra/dfal-neural-networks (privado): `src/`, `grids/`, `tests/`, `tools/relatorio/` (gera este documento e o caderno)."],
 ], widths=[3.6, 13.4], font=9)
 para("Percentuais com vírgula; “p.p.” = pontos percentuais; “±” = desvio padrão entre folds. Números extraídos dos arquivos de resultados, idênticos às métricas registradas no W&B.", size=8.5, color="6f7889")
 
-out = os.path.join(OUT_DIR, "caderno-cifar10.docx")
+out = "miniprojeto 1 doc.docx"
 doc.save(out)
 print("docx:", out, os.path.getsize(out) // 1024, "KB | figuras:", fig_counter[0])

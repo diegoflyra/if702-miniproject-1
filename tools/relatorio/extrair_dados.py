@@ -4,7 +4,8 @@ Uso (na raiz do repositório):
     python tools/relatorio/extrair_dados.py
 
 Lê outputs_mlp/, outputs_cnn/, outputs_final/ (complementares) e outputs_augmentation/ (bônus)
-e grava relatorio/dados/doc_data.json e relatorio/dados/curves.json.
+e grava relatorio/dados/doc_data.json e relatorio/dados/curves.json. As métricas por classe dos campeões,
+as matrizes de confusão (somadas nos 5 folds) e as conclusões por hiperparâmetro vêm de conclusoes.py.
 """
 
 import glob
@@ -13,6 +14,8 @@ import os
 
 import numpy as np
 import pandas as pd
+
+import conclusoes
 
 M, C, F, A = "outputs_mlp", "outputs_cnn", "outputs_final", "outputs_augmentation"
 OUT = os.path.join("relatorio", "dados")
@@ -148,6 +151,12 @@ def main():
         if extra_paired:
             aug[net]["depth_with_aug"] = paired(A, extra_paired[0], [extra_paired[1]])[0]
     data["aug"] = aug
+
+    # ------------------------------------------------------------ campeões por classe e hiperparâmetros
+    champs = [conclusoes.champion(*c) for c in conclusoes.CHAMPIONS]
+    data["champions"] = champs
+    data["class_conclusions"] = conclusoes.class_conclusions(champs)
+    data["hyper"] = conclusoes.hyperparameters(data)
     json.dump(data, open(os.path.join(OUT, "doc_data.json"), "w"), ensure_ascii=False, default=float, allow_nan=False)
 
     # ------------------------------------------------------------ curvas por época

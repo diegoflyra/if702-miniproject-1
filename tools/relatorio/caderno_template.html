@@ -25,6 +25,7 @@
   --seq-ink-0: #121722; --seq-ink-1: #121722; --seq-ink-2: #121722; --seq-ink-3: #121722;
   --seq-ink-4: #ffffff; --seq-ink-5: #ffffff; --seq-ink-6: #ffffff;
   --shadow: 0 1px 2px rgba(18, 23, 34, 0.05), 0 8px 24px rgba(18, 23, 34, 0.04);
+  --diag-ink: #ffffff;
   --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --cond: "IBM Plex Sans Condensed", "IBM Plex Sans", system-ui, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
@@ -41,6 +42,7 @@
     --seq-ink-0: #edf0f5; --seq-ink-1: #edf0f5; --seq-ink-2: #edf0f5; --seq-ink-3: #edf0f5;
     --seq-ink-4: #0e1015; --seq-ink-5: #0e1015; --seq-ink-6: #0e1015;
     --shadow: none;
+    --diag-ink: #0e1015;
   }
 }
 :root[data-theme="dark"] {
@@ -54,6 +56,7 @@
   --seq-ink-0: #edf0f5; --seq-ink-1: #edf0f5; --seq-ink-2: #edf0f5; --seq-ink-3: #edf0f5;
   --seq-ink-4: #0e1015; --seq-ink-5: #0e1015; --seq-ink-6: #0e1015;
   --shadow: none;
+  --diag-ink: #0e1015;
 }
 
 * { box-sizing: border-box; }
@@ -218,6 +221,82 @@ dl.protocol dd { color: var(--ink-2); font-size: 14.5px; }
 
 .figure-tile .bonus-line { border-top: 1px solid var(--hair); padding-top: 8px; margin-top: 4px; }
 
+/* ---------- métricas por classe ---------- */
+.explorer { display: grid; gap: 20px; }
+.picker { display: grid; gap: 10px; }
+.seg { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; min-width: 0; }
+.seg-label { font: 600 11px/1 var(--sans); letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); min-width: 64px; }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.seg label { font: 500 12.5px/1 var(--mono); padding: 7px 9px; border: 1px solid var(--hair); border-radius: 6px; background: var(--surface-2); color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+.seg label:hover { border-color: var(--hair-strong); color: var(--ink); }
+.seg input:checked + label { background: var(--ink); border-color: var(--ink); color: var(--surface); }
+.seg input:focus-visible + label { outline: 2px solid var(--accent); outline-offset: 2px; }
+.picker-row { display: flex; flex-wrap: wrap; gap: 10px 28px; }
+.model-head { display: grid; gap: 4px; }
+.model-head p { margin: 0; color: var(--ink-2); font-size: 14px; }
+.explorer-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: start; }
+@media (max-width: 1060px) { .explorer-body { grid-template-columns: minmax(0, 1fr); } }
+.cls-table td, .cls-table th { padding: 7px 10px; }
+.cls-table tfoot td { background: var(--surface-2); border-top: 1px solid var(--hair); font-weight: 600; }
+.cls-table td small { color: var(--muted); font-weight: 400; }
+.f1cell { display: inline-flex; align-items: center; gap: 8px; justify-content: flex-end; }
+.bar { width: 48px; height: 6px; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--hair); overflow: hidden; display: inline-block; }
+.bar i { display: block; height: 100%; }
+.split-note { font-size: 12.5px; color: var(--muted); margin: 8px 0 0; }
+.cm-wrap { overflow-x: auto; }
+.cm { display: grid; grid-template-columns: auto repeat(10, minmax(34px, 1fr)); gap: 2px; font-variant-numeric: tabular-nums; min-width: 430px; }
+.cm .corner { font-size: 11px; color: var(--muted); display: flex; align-items: flex-end; justify-content: flex-end; padding: 0 8px 4px 0; line-height: 1.3; text-align: right; }
+.cm .h { writing-mode: vertical-rl; transform: rotate(180deg); font-size: 11.5px; color: var(--ink-2); height: 74px; padding: 4px 0; text-align: start; white-space: nowrap; }
+.cm .r { font-size: 11.5px; color: var(--ink-2); display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; white-space: nowrap; }
+.cm .c { height: 34px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 11.5px; background: var(--surface-2); color: var(--muted); }
+.cm .c.d { font-weight: 700; }
+.auto-reading { margin: 0; padding-left: 18px; display: grid; gap: 8px; font-size: 14.5px; }
+.auto-reading li::marker { color: var(--accent); }
+
+/* ---------- hiperparâmetros ---------- */
+.verdict { display: inline-flex; align-items: center; font: 600 11.5px/1 var(--sans); padding: 5px 8px; border-radius: 999px; white-space: nowrap; border: 1px solid transparent; }
+.v-strong { background: var(--accent-soft); color: var(--accent); }
+.v-risk { background: var(--pending-soft); color: var(--pending); }
+.v-mid { background: var(--surface-2); color: var(--ink); border-color: var(--hair-strong); }
+.v-low { background: var(--surface-2); color: var(--muted); border-color: var(--hair); }
+.v-cond { background: transparent; color: var(--ink-2); border: 1px dashed var(--hair-strong); }
+.nets { display: inline-flex; gap: 10px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
+.nets span { display: inline-flex; align-items: center; gap: 5px; }
+.nets .key { width: 8px; height: 8px; }
+.hp-summary td:first-child a { color: var(--ink); font-weight: 600; text-decoration: none; }
+.hp-summary td:first-child a:hover { text-decoration: underline; }
+.hp-groups { display: grid; gap: 32px; margin-top: 28px; }
+.hp-group { display: grid; gap: 12px; }
+.hp-list { background: var(--surface); border: 1px solid var(--hair); border-radius: 14px; box-shadow: var(--shadow); }
+.hp { display: grid; grid-template-columns: minmax(240px, 300px) minmax(0, 1fr); gap: 18px 32px; padding: 22px 24px; border-top: 1px solid var(--hair); scroll-margin-top: 24px; }
+.hp:first-child { border-top: 0; }
+@media (max-width: 860px) { .hp { grid-template-columns: minmax(0, 1fr); } }
+.hp-side { display: grid; gap: 12px; align-content: start; }
+.hp-name { font: 600 20px/1.2 var(--cond); margin: 0; text-wrap: balance; text-transform: none; letter-spacing: 0; color: var(--ink); }
+.hp-meta { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 4px 10px; font-size: 13px; margin: 0; }
+.hp-meta dt { color: var(--muted); }
+.hp-meta dd { margin: 0; color: var(--ink); }
+.hp-effect { display: grid; gap: 4px; padding-top: 10px; border-top: 1px solid var(--hair); }
+.hp-effect .big { font: 600 28px/1.05 var(--cond); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.hp-effect .note { font-size: 12.5px; color: var(--muted); }
+.hp-main { display: grid; gap: 16px; align-content: start; min-width: 0; }
+.hp-main p { margin: 0; max-width: 72ch; }
+.hp-main ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; font-size: 14.5px; }
+.hp-main ul li::marker { color: var(--accent); }
+.dots { display: grid; gap: 5px; }
+.dot-row { display: grid; grid-template-columns: minmax(0, 12rem) minmax(80px, 1fr) 7.2rem; gap: 10px; align-items: center; font-size: 12.5px; }
+.dot-row .lab { color: var(--ink-2); line-height: 1.25; }
+.dot-row .track { position: relative; height: 18px; }
+.dot-row .track::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; border-top: 1px solid var(--hair); }
+.dot-row .dot { position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); background: var(--ink-2); box-shadow: 0 0 0 2px var(--surface); }
+.dot-row .dot.champ { width: 12px; height: 12px; background: var(--accent); }
+.dot-row .val { font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.dot-row .val small { font-weight: 400; color: var(--muted); }
+.dot-axis { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; }
+.dots-note { font-size: 12px; color: var(--muted); }
+.why { background: var(--surface-2); border: 1px solid var(--hair); border-radius: 10px; padding: 14px 16px; font-size: 14.5px; }
+.why h4 { margin-bottom: 6px; }
+
 #tip { position: fixed; z-index: 10; pointer-events: none; background: var(--ink); color: var(--surface); font-size: 12.5px; line-height: 1.45; padding: 8px 10px; border-radius: 6px; max-width: 280px; box-shadow: 0 6px 20px rgba(0,0,0,0.18); }
 #tip b { font-weight: 600; }
 footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair); padding-top: 18px; }
@@ -250,12 +329,14 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair)
         </ol>
       </li>
       <li><a href="#comparacao">MLP × CNN por classe</a></li>
+      <li><a href="#por-classe">Métricas por classe e confusões</a></li>
       <li><a href="#bonus">Bônus · Augmentation</a>
         <ol>
           <li><a href="#bonus-cnn">CNN</a></li>
           <li><a href="#bonus-mlp">MLP</a></li>
         </ol>
       </li>
+      <li><a href="#hiperparametros">Conclusões por hiperparâmetro</a></li>
       <li><a href="#licoes">Lições metodológicas</a></li>
       <li><a href="#roteiro">Roteiro de slides</a></li>
       <li><a href="#arquivos">Onde está cada coisa</a></li>
@@ -644,7 +725,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair)
                 <div id="hm-cnn-b3"></div>
               </div>
               <div class="reading"><h4>O que concluir</h4><ul>
-                <li><b>BatchNorm foi o maior ganho da CNN: +3,5 a 4,5 p.p.</b></li>
+                <li><b>BatchNorm foi o maior ganho da CNN: +3,3 a +4,2 p.p.</b></li>
                 <li>Sem BatchNorm, o dropout não faz diferença. Com BatchNorm, dropout 0,3 e 0,5 empatam no topo, e o 0,5 reduziu o gap de 0,142 para 0,095.</li>
                 <li>O teste ficou ~1 p.p. abaixo da validação: dentro de 1 desvio, e esperado depois de escolher o melhor entre várias opções.</li>
               </ul></div>
@@ -742,6 +823,37 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair)
       </div>
     </section>
 
+    <!-- ================================================================ POR CLASSE -->
+    <section id="por-classe">
+      <div class="section-head">
+        <div class="eyebrow">Campeões</div>
+        <h2>Métricas por classe e matrizes de confusão</h2>
+        <p>Precision, recall e F1 de cada uma das 10 classes para os 13 melhores modelos: o campeão de cada etapa, as referências e os bônus. Treino e validação são a média dos 5 folds na melhor época; o teste é a média dos 5 modelos (um por fold) nas 10.000 imagens de teste. As matrizes somam os 5 folds: 50.000 previsões, 5.000 por classe real.</p>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><span class="title">F1 no teste por classe, etapa a etapa</span><span class="sub">contorno = campeã da rede sem augmentation</span></div>
+        <div id="hm-f1-stages"></div>
+      </div>
+      <div class="reading prose" style="margin-top:20px; max-width:80ch"><h4>O que concluir</h4><ul id="class-conclusions"></ul></div>
+      <div class="panel explorer" style="margin-top:24px">
+        <div class="picker" id="champ-picker"></div>
+        <div class="model-head" id="model-head"></div>
+        <dl class="facts" id="model-facts"></dl>
+        <div class="explorer-body">
+          <div>
+            <div class="table-wrap"><table class="cls-table" id="tbl-classes"></table></div>
+            <p class="split-note" id="split-note"></p>
+          </div>
+          <div>
+            <div class="panel-head" style="margin-bottom:8px"><span class="title">Matriz de confusão no teste</span><span class="sub" id="cm-sub"></span></div>
+            <div class="cm-wrap"><div class="cm" id="cm"></div></div>
+            <div class="hm-scale" id="cm-scale"></div>
+          </div>
+        </div>
+        <div class="reading"><h4>Leitura automática · teste</h4><ul class="auto-reading" id="model-reading"></ul></div>
+      </div>
+    </section>
+
     <!-- ================================================================ BÔNUS -->
     <section id="bonus">
       <div class="section-head">
@@ -764,7 +876,7 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair)
             </div>
             <div class="split">
               <div class="reading"><h4>O que concluir</h4><ul>
-                <li><b>O maior salto de todo o estudo: +7,9 p.p. na validação</b> sobre a mesma receita sem augmentation, vencendo em <b>5 de 5 folds</b>; no teste, +7,4 p.p. (5 de 5).</li>
+                <li><b>O maior salto de todo o estudo: +7,8 p.p. na validação</b> sobre a mesma receita sem augmentation, vencendo em <b>5 de 5 folds</b>; no teste, +7,4 p.p. (5 de 5).</li>
                 <li><b>A rede de 4 blocos voltou a vencer</b> (+0,8 p.p. sobre 3 blocos, em 3 de 3 folds). Sem augmentation, 3 e 4 blocos empatam. Com mais diversidade de dados, a capacidade extra deixa de virar overfitting: é a interação entre blocos no sentido inverso.</li>
                 <li>O gap treino–validação caiu de 0,105 para 0,069, e a melhor época passou de ~10 para ~31: o modelo aprende por mais tempo sem decorar.</li>
                 <li>O dropout <b>continuou útil</b>: 0,5 ≥ 0,3 com augmentation. A hipótese de que augmentation dispensaria o dropout não se confirmou.</li>
@@ -843,6 +955,17 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair)
           </div>
         </article>
       </div>
+    </section>
+
+    <!-- ================================================================ HIPERPARÂMETROS -->
+    <section id="hiperparametros">
+      <div class="section-head">
+        <div class="eyebrow">Síntese</div>
+        <h2>Conclusões por hiperparâmetro</h2>
+        <p>Os blocos respondem “qual configuração venceu”; esta seção responde “o que cada hiperparâmetro faz e por quê”. Para cada um: o efeito medido na validação, o resultado por valor testado, a evidência e o mecanismo que explica o resultado.</p>
+      </div>
+      <div class="table-wrap"><table class="hp-summary" id="tbl-hp-summary"></table></div>
+      <div class="hp-groups" id="hp-groups"></div>
     </section>
 
     <!-- ================================================================ LIÇÕES -->
@@ -1246,6 +1369,133 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair)
   });
   document.querySelectorAll("[data-curve]").forEach(lineChart);
 
+  /* ---------- métricas por classe dos campeões ---------- */
+  const md = (s) => esc(s).replace(/\*\*([^*]+)\*\*/g, "<b>$1</b>").replace(/`([^`]+)`/g, "<code>$1</code>");
+  (() => {
+    const CH = D.champions, CL = D.classes;
+    const SPLIT = { train: "Treino", val: "Validação", test: "Teste" };
+    const NOTE = {
+      train: "Média dos 5 folds na melhor época, medida em modo avaliação sobre as 40.000 imagens de treino do fold (sem dropout e sem augmentation).",
+      val: "Média dos 5 folds na melhor época, sobre as 10.000 imagens de validação de cada fold.",
+      test: "Média dos 5 modelos (um por fold) nas mesmas 10.000 imagens de teste. ± = desvio padrão entre folds.",
+    };
+    document.getElementById("class-conclusions").innerHTML = D.class_conclusions.map((t) => `<li>${md(t)}</li>`).join("");
+
+    // visão geral: F1 no teste por classe × etapa
+    const ov = document.getElementById("hm-f1-stages");
+    const facets = document.createElement("div"); facets.className = "hm-facets"; ov.appendChild(facets);
+    const dom = [0.3, 0.95];
+    [["mlp", "MLP"], ["cnn", "CNN"]].forEach(([net, title]) => {
+      const f = document.createElement("div"); f.innerHTML = `<div class="hm-facet-title">${title}</div>`; facets.appendChild(f);
+      const cols = CH.filter((c) => c.net === net);
+      heatmap(f, { rows: [...CL, "macro"], cols, domain: dom,
+        cell: (cls, c) => {
+          const v = cls === "macro" ? c.overall.test.f1_macro.mean : c.classes.test.f1.mean[CL.indexOf(cls)];
+          return { v, champ: c.label.includes("campeã"), tip: `<b>${esc(c.label)}</b><br>${esc(c.sub)}<br>${cls === "macro" ? "F1 macro" : PT[cls]} · F1 no teste ${pct(v)}` };
+        },
+        rowFmt: (r) => r === "macro" ? "média macro" : PT[r], colFmt: (c) => c.short });
+    });
+    scale(ov, dom, "· F1 no teste, média de 5 folds");
+
+    // seletor
+    const slug = (c) => `champ-${c.net}-${c.short.replace(/[^a-z0-9]+/gi, "").toLowerCase()}`;
+    const state = { i: CH.findIndex((c) => c.net === "cnn" && c.short === "+B"), split: "test", cm: "pct" };
+    const radios = (name, items, checked, label) => `<div class="seg" role="radiogroup" aria-label="${label}"><span class="seg-label">${label}</span>${items.map(([id, value, text, title]) =>
+      `<input type="radio" name="${name}" id="${id}" value="${value}"${String(value) === String(checked) ? " checked" : ""}><label for="${id}"${title ? ` title="${esc(title)}"` : ""}>${text}</label>`).join("")}</div>`;
+    const picker = document.getElementById("champ-picker");
+    picker.innerHTML = ["mlp", "cnn"].map((net) => radios("champ", CH.map((c, i) => [c, i]).filter(([c]) => c.net === net).map(([c, i]) => [slug(c), i, esc(c.short), `${c.label} · ${c.sub}`]), state.i, net.toUpperCase())).join("")
+      + `<div class="picker-row">${radios("split", Object.entries(SPLIT).map(([k, t]) => ["split-" + k, k, t]), state.split, "Métricas")}${radios("cm-mode", [["cm-pct", "pct", "% da classe real"], ["cm-count", "count", "imagens"]], state.cm, "Matriz")}</div>`;
+    picker.addEventListener("change", (e) => {
+      if (e.target.name === "champ") state.i = Number(e.target.value);
+      if (e.target.name === "split") state.split = e.target.value;
+      if (e.target.name === "cm-mode") state.cm = e.target.value;
+      render();
+    });
+
+    function render() {
+      const c = CH[state.i], S = c.classes[state.split], O = c.overall[state.split], sp = SPLIT[state.split].toLowerCase();
+      const color = c.net === "mlp" ? "var(--mlp)" : "var(--cnn)";
+      document.getElementById("model-head").innerHTML = `<div class="legend"><span><i class="key ${c.net}"></i>${c.net.toUpperCase()} · ${esc(c.short)}</span></div><h3>${esc(c.label)}</h3><p>${esc(c.sub)} · <span class="mono">${esc(c.exp)}</span></p>`;
+      const pm = (o, d = 1) => `${pct(o.mean, d)} <small class="mono">${sd(o.std)}</small>`;
+      document.getElementById("model-facts").innerHTML = [
+        [`Acurácia · ${sp}`, pm(O.accuracy)], [`F1 macro · ${sp}`, pm(O.f1_macro)], [`Loss · ${sp}`, num(O.loss.mean, 3)],
+        ["Melhor época", num(c.best_epoch, 1)], ["Parâmetros", params(c.params)],
+      ].map(([k, v]) => `<div class="fact"><dt>${k}</dt><dd>${v}</dd></div>`).join("");
+
+      const cellPM = (m, i) => `${pct(S[m].mean[i])} <small>${sd(S[m].std[i])}</small>`;
+      const worst = S.f1.mean.indexOf(Math.min(...S.f1.mean));
+      const trR = c.classes.train.recall.mean;
+      const showGap = state.split !== "train";
+      document.getElementById("tbl-classes").innerHTML =
+        `<thead><tr><th>Classe</th><th class="num">Precision</th><th class="num">Recall</th><th class="num">F1</th>${showGap ? '<th class="num" title="recall no treino − recall neste conjunto">Δ recall treino</th>' : ""}</tr></thead><tbody>`
+        + CL.map((cl, i) => `<tr><td>${PT[cl]}${i === worst ? ' <small class="mono">pior</small>' : ""}</td><td class="num">${cellPM("precision", i)}</td><td class="num">${cellPM("recall", i)}</td>`
+          + `<td class="num"><span class="f1cell">${cellPM("f1", i)}<span class="bar" aria-hidden="true"><i style="width:${(S.f1.mean[i] * 100).toFixed(1)}%;background:${color}"></i></span></span></td>`
+          + (showGap ? `<td class="num">${pp(trR[i] - S.recall.mean[i])}</td>` : "") + `</tr>`).join("")
+        + `</tbody><tfoot><tr><td>Média macro</td><td class="num">${pm(O.precision_macro)}</td><td class="num">${pm(O.recall_macro)}</td><td class="num">${pm(O.f1_macro)}</td>${showGap ? "<td></td>" : ""}</tr></tfoot>`;
+      document.getElementById("split-note").textContent = NOTE[state.split] + (state.split === "test" ? "" : " A matriz ao lado é sempre do teste.");
+
+      // matriz de confusão (soma dos folds)
+      const cm = c.confusion, rows = cm.map((r) => r.reduce((a, b) => a + b, 0));
+      const g = document.getElementById("cm");
+      let html = `<div class="corner">real ↓<br>previsto →</div>` + CL.map((cl) => `<div class="h">${PT[cl]}</div>`).join("");
+      cm.forEach((r, i) => {
+        html += `<div class="r">${PT[CL[i]]}</div>`;
+        r.forEach((n, j) => {
+          const f = n / rows[i], diag = i === j;
+          let style = "", txt = state.cm === "pct" ? Math.round(f * 100) : n;
+          if (diag) {
+            const mix = Math.round(18 + 72 * Math.max(0, Math.min(1, (f - 0.2) / 0.75)));
+            style = `background:color-mix(in oklab, var(--accent) ${mix}%, var(--surface));color:${mix > 52 ? "var(--diag-ink)" : "var(--ink)"}`;
+          } else if (f >= 0.005) {
+            const k = Math.min(6, Math.floor(Math.min(1, f / 0.2) * 7));
+            style = `background:var(--seq-${k});color:var(--seq-ink-${k})`;
+          } else if (state.cm === "pct") txt = "0";
+          html += `<div class="c${diag ? " d" : ""}" style="${style}" tabindex="0" data-tip="<b>${PT[CL[i]]} → ${PT[CL[j]]}</b><br>${n.toLocaleString("pt-BR")} de ${rows[i].toLocaleString("pt-BR")} imagens (${pct(f)})${diag ? "<br>diagonal = recall" : ""}">${txt}</div>`;
+        });
+      });
+      g.innerHTML = html;
+      document.getElementById("cm-sub").textContent = `soma dos ${c.cm_folds} folds · ${rows.reduce((a, b) => a + b, 0).toLocaleString("pt-BR")} previsões · ${state.cm === "pct" ? "% de cada linha" : "número de imagens"}`;
+      document.getElementById("cm-scale").innerHTML = `<span>Erros: 0%</span><span class="ramp">${[0,1,2,3,4,5,6].map((k) => `<i style="background:var(--seq-${k})"></i>`).join("")}</span><span>≥ 20% da linha</span><span>· diagonal (acertos) em verde-azulado, mais escura quanto maior o recall</span>`;
+      document.getElementById("model-reading").innerHTML = c.reading.map((t) => `<li>${md(t)}</li>`).join("");
+    }
+    render();
+  })();
+
+  /* ---------- conclusões por hiperparâmetro ---------- */
+  (() => {
+    const H = D.hyper;
+    const VCLASS = (v) => /decisivo/.test(v) ? "v-strong" : /risco/.test(v) ? "v-risk" : /moderado/.test(v) ? "v-mid" : /depende|só com/.test(v) ? "v-cond" : "v-low";
+    const nets = (arr) => `<span class="nets">${arr.map((n) => `<span><i class="key ${n.toLowerCase()}"></i>${n}</span>`).join("")}</span>`;
+    const verdict = (v) => `<span class="verdict ${VCLASS(v)}">${esc(v)}</span>`;
+    table("tbl-hp-summary", [{ t: "Hiperparâmetro" }, { t: "Rede" }, { t: "Escolha" }, { t: "Efeito na validação", num: 1 }, { t: "Veredito" }],
+      H.map((h) => ({ cells: [`<a href="#${h.id}">${esc(h.name)}</a>`, nets(h.nets), esc(h.choice), `<b>${esc(h.effect)}</b><br><small style="color:var(--muted)">${esc(h.effect_note)}</small>`, verdict(h.verdict)] })));
+    const dots = (h) => {
+      if (!h.marg) return "";
+      const vals = h.marg.map((m) => m.mean); let lo = Math.min(...vals), hi = Math.max(...vals);
+      if (hi - lo > 0.2) { lo = 0; hi = Math.ceil(hi * 10) / 10; } else { lo = Math.floor((lo - 0.003) * 100) / 100; hi = Math.ceil((hi + 0.003) * 100) / 100; }
+      const x = (v) => ((v - lo) / (hi - lo) * 100).toFixed(2);
+      return `<div class="dots" role="img" aria-label="Validação por valor de ${esc(h.name)}">${h.marg.map((m) => {
+        const tip = `<b>${esc(m.label)}</b><br>Validação: ${pct(m.mean)}${m.n > 1 ? ` (média de ${m.n} configurações; melhor ${pct(m.best)})` : ""}<br>Melhor época: ${num(m.ep, 1)}`;
+        return `<div class="dot-row"><span class="lab">${esc(m.label)}</span><span class="track" tabindex="0" data-tip="${tip.replace(/"/g, "&quot;")}"><i class="dot${m.champ ? " champ" : ""}" style="left:${x(m.mean)}%"></i></span><span class="val">${pct(m.mean)} <small>· ép. ${num(m.ep, 0)}</small></span></div>`;
+      }).join("")}<div class="dot-row"><span></span><span class="dot-axis"><span>${pct(lo, 0)}</span><span>${pct(hi, 0)}</span></span><span></span></div><div class="dots-note">${esc(h.marg_note)} · ponto verde-azulado = valor escolhido</div></div>`;
+    };
+    const groups = [...new Set(H.map((h) => h.group))];
+    document.getElementById("hp-groups").innerHTML = groups.map((g) => `<div class="hp-group"><h3>${esc(g)}</h3><div class="hp-list">${H.filter((h) => h.group === g).map((h) => `
+      <article class="hp" id="${h.id}">
+        <div class="hp-side">
+          <h4 class="hp-name">${esc(h.name)}</h4>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">${nets(h.nets)}${verdict(h.verdict)}</div>
+          <dl class="hp-meta"><dt>Valores</dt><dd class="mono">${esc(h.values)}</dd><dt>Escolha</dt><dd>${esc(h.choice)}</dd></dl>
+          <div class="hp-effect"><span class="big">${esc(h.effect)}</span><span class="note">${esc(h.effect_note)}</span></div>
+        </div>
+        <div class="hp-main">
+          ${dots(h)}
+          <div><h4>Evidência</h4><ul>${h.evidence.map((e) => `<li>${md(e)}</li>`).join("")}</ul></div>
+          <div class="why"><h4>Por quê</h4><p>${md(h.why)}</p></div>
+        </div>
+      </article>`).join("")}</div></div>`).join("");
+  })();
+
   /* ---------- roteiro ---------- */
   const outline = [
     ["Título e equipe", "Estudo de ablação de MLP e CNN no CIFAR-10.", "—"],
@@ -1259,10 +1509,12 @@ footer { font-size: 13px; color: var(--muted); border-top: 1px solid var(--hair)
     ["MLP · Resultado", "55,2% no teste (+4,0 p.p.); teto da arquitetura; confusões por cor e fundo.", "Gráfico de evolução deste caderno"],
     ["CNN · Topologia (B1)", "Max pooling vence stride 2 em todas as combinações; 4 blocos, kernel 3.", "<code>heatmap_cnn_b1_…__val-accuracy_mean.png</code>"],
     ["CNN · Otimização (B2)", "Sem ganho: Adam padrão já adequado; mesmo padrão de colapso da MLP.", "<code>heatmap_cnn_b2_…__val-accuracy_mean.png</code>"],
-    ["CNN · BatchNorm e dropout (B3)", "BatchNorm +3,5 a 4,5 p.p.; dropout só ajuda com BatchNorm; pergunta do pooling em aberto.", "<code>heatmap_cnn_b3_…__val-accuracy_mean.png</code>"],
+    ["CNN · BatchNorm e dropout (B3)", "BatchNorm +3,3 a +4,2 p.p.; dropout só ajuda com BatchNorm; pergunta do pooling em aberto.", "<code>heatmap_cnn_b3_…__val-accuracy_mean.png</code>"],
     ["CNN · Pooling (+B)", "Novo campeão 3 blocos + pool 2 (79,5%); tamanho final do mapa; reprodutibilidade.", "<code>heatmap_cnn_b3b_pooling_…__val-accuracy_mean.png</code> + <code>pareado_…png</code>"],
     ["MLP × CNN", "+24,3 p.p. no teste; CNN vence todas as classes; muda o tipo de erro.", "Gráfico por classe deste caderno"],
     ["Bônus · Augmentation", "Mesmo pré-processamento: CNN +7,4 p.p. (86,4%, 4 blocos voltam a vencer) × MLP +2,7 p.p. (57,8%, limitada por épocas).", "<code>heatmap_cnn_b4_augmentation_…</code> + curvas por época do bônus"],
+    ["Métricas por classe", "Gato é a pior classe e automóvel/navio as melhores nos 13 campeões; gato ↔ cachorro domina as confusões; a CNN ganha mais nos animais.", "Heatmap de F1 por etapa + matriz de confusão do campeão"],
+    ["Hiperparâmetros: o que pesou", "Decisivos: augmentation (CNN), max pooling × stride, BatchNorm. Moderados: profundidade, kernel, janela de pooling, dropout. Empate: otimizador. Maior risco: learning rate.", "Tabela-resumo de hiperparâmetros"],
     ["Lições metodológicas", "Validação × teste, maldição do vencedor, interação, orçamento, ruído, pareamento.", "Tabela de lições"],
     ["Conclusões", "O que mais pesou em cada rede e por quê; limitações e próximos passos.", "—"],
   ];
